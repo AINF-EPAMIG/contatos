@@ -84,7 +84,7 @@ function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile:
         {cartao?.foto ? (
           <Image
             src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
-            alt="Foto do usuário"git 
+            alt="Foto do usuário"
             width={isMobile ? 96 : 128}
             height={isMobile ? 96 : 128}
             className="w-full h-full object-cover"
