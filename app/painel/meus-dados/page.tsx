@@ -198,7 +198,7 @@ function MobileLayout({
 
       {/* QR Code Section */}
       <QRCodeSection 
-        baseUrl={baseUrl || "http://localhost:3000/cartao"}
+        baseUrl={baseUrl}
         cpf={cartao?.cpf || user?.cpf || "12345678900"}
         isMobile={true}
       />
@@ -234,7 +234,7 @@ function DesktopLayout({
 
         {/* QR Code Section */}
         <QRCodeSection 
-          baseUrl={baseUrl || "http://localhost:3000/cartao"}
+          baseUrl={baseUrl}
           cpf={cartao?.cpf || user?.cpf || "12345678900"}
           isMobile={false}
         />
