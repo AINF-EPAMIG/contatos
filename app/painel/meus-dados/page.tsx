@@ -5,8 +5,7 @@ import QRCode from "react-qr-code";
 import { User, Instagram, Mail, Phone, BookOpenCheck, Edit, Plus } from "lucide-react";
 import { useResponsive } from "@/lib/hooks/useResponsive";
 import dynamic from "next/dynamic";
-
-const EPAMIG_GRADIENT = "linear-gradient(90deg,#2e7d32 0%,#3A8144 100%)";
+import Image from "next/image";
 
 // ============================================================================
 // COMPONENTS
@@ -67,7 +66,6 @@ export default function MeusDadosPage() {
   const user = session?.user as UserData | undefined;
 
   const [cartao, setCartao] = useState<CartaoDigital | null>(null);
-  const [loading, setLoading] = useState(true);
   const [baseUrl, setBaseUrl] = useState("");
   const [showModal, setShowModal] = useState(false);
 
@@ -79,7 +77,6 @@ export default function MeusDadosPage() {
 
   useEffect(() => {
     if (status === "authenticated" && user?.cpf) {
-      setLoading(true);
       fetch(`/api/cartao-digital?cpf=${user.cpf}`)
         .then(async (res) => {
           if (!res.ok) throw new Error("Erro na API");
@@ -88,11 +85,9 @@ export default function MeusDadosPage() {
           const data = JSON.parse(text);
           setCartao(data.cartao || null);
         })
-        .catch(() => setCartao(null))
-        .finally(() => setLoading(false));
+        .catch(() => setCartao(null));
     } else {
       setCartao(null);
-      setLoading(false);
     }
   }, [user?.cpf, status]);
 
@@ -108,21 +103,6 @@ export default function MeusDadosPage() {
   }
 
   if (!user) return null;
-
-  // Verificar se há links disponíveis - sempre mostrar se houver dados
-  const hasLinks = Boolean(
-    cartao?.whatsapp || 
-    cartao?.instagram || 
-    cartao?.email || 
-    cartao?.lattes ||
-    user?.email
-  );
-
-  // Debug: Log dos valores
-  console.log('Debug - hasLinks:', hasLinks);
-  console.log('Debug - baseUrl:', baseUrl);
-  console.log('Debug - cartao:', cartao);
-  console.log('Debug - user:', user);
 
   // ========================================================================
   // RENDER
@@ -154,7 +134,6 @@ export default function MeusDadosPage() {
             <MobileLayout 
               cartao={cartao}
               user={user}
-              hasLinks={hasLinks}
               baseUrl={baseUrl}
             />
           ) : (
@@ -162,7 +141,6 @@ export default function MeusDadosPage() {
             <DesktopLayout 
               cartao={cartao}
               user={user}
-              hasLinks={hasLinks}
               baseUrl={baseUrl}
             />
           )}
@@ -198,12 +176,10 @@ export default function MeusDadosPage() {
 function MobileLayout({ 
   cartao, 
   user, 
-  hasLinks, 
   baseUrl 
 }: { 
   cartao: CartaoDigital | null; 
   user: UserData | undefined; 
-  hasLinks: boolean;
   baseUrl: string;
 }) {
   return (
@@ -232,12 +208,10 @@ function MobileLayout({
 function DesktopLayout({ 
   cartao, 
   user, 
-  hasLinks, 
   baseUrl 
 }: { 
   cartao: CartaoDigital | null; 
   user: UserData | undefined; 
-  hasLinks: boolean;
   baseUrl: string;
 }) {
   return (
@@ -286,11 +260,13 @@ function ProfileSection({
       {/* Avatar Institucional */}
       <div className={`${isMobile ? 'w-20 h-20 sm:w-24 sm:h-24' : 'w-32 h-32'} mx-auto mb-3 sm:mb-4 rounded-full border-4 border-white bg-white flex items-center justify-center overflow-hidden shadow-xl`}>
         {cartao?.foto ? (
-          <img
+          <Image
             src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
             alt="Foto do usuário"
             className="w-full h-full object-cover"
             style={{ objectPosition: 'center 20%' }}
+            width={isMobile ? 96 : 128}
+            height={isMobile ? 96 : 128}
           />
         ) : (
           <User size={isMobile ? 32 : 60} className="text-gray-400 sm:w-10 sm:h-10" />

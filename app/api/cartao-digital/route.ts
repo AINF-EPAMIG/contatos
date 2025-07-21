@@ -76,7 +76,7 @@ async function handleRequest(request: NextRequest, method: "POST" | "PUT") {
       // Cria diretório se não existir
       try {
         await mkdir(uploadDir, { recursive: true });
-      } catch (err) {
+      } catch {
         // Diretório já existe, continua
       }
       
@@ -106,18 +106,6 @@ async function handleRequest(request: NextRequest, method: "POST" | "PUT") {
         ]
       );
     } else if (method === "PUT") {
-      // Busca foto antiga se houver nova foto
-      let fotoAntiga: string | null = null;
-      if (foto) {
-        const [antigo] = await db.execute(
-          "SELECT foto FROM cartao_digital WHERE cpf = ? LIMIT 1",
-          [cpf]
-        ) as [mysql.RowDataPacket[], mysql.FieldPacket[]];
-        if (antigo.length && antigo[0].foto) {
-          fotoAntiga = antigo[0].foto;
-        }
-      }
-      
       // Atualiza dados
       let sql = "UPDATE cartao_digital SET nome=?, email=?, cargo=?, linkedin=?, whatsapp=?, instagram=?, lattes=?";
       const params: (string | null)[] = [

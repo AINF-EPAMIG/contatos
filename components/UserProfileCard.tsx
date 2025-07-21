@@ -1,5 +1,6 @@
 // components/UserProfileCard.tsx
 import { User } from "lucide-react";
+import Image from "next/image";
 
 interface Props {
   nome: string;
@@ -15,7 +16,7 @@ export default function UserProfileCard({ nome, cargo, chapa, email, foto }: Pro
       <div className="flex-shrink-0">
         <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/30 overflow-hidden shadow-lg">
           {foto ? (
-            <img src={foto.startsWith("http") ? foto : `/uploads/${foto}`} alt="Foto do usuário" className="w-full h-full object-cover rounded-xl" />
+            <Image src={foto.startsWith("http") ? foto : `/uploads/${foto}`} alt="Foto do usuário" className="w-full h-full object-cover rounded-xl" width={56} height={56} />
           ) : (
             <User className="text-white" size={28} />
           )}

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import { User, Camera, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 type CartaoDigital = {
   id: number;
@@ -120,9 +121,11 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
           <div className="relative">
             {fotoPreview ? (
               <div className="relative group">
-                <img
+                <Image
                   src={fotoPreview}
                   alt="Preview"
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full object-cover border-4 border-green-200 shadow-lg"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">

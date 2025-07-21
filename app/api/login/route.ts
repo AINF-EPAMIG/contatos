@@ -17,25 +17,27 @@ export async function POST(req: Request) {
     }
 
     const conexoes = await getConexoes();
-    const sistemas: any[] = [];
+    const sistemas: unknown[] = [];
 
-    for (const [nome, conn] of Object.entries(conexoes)) {
+    for (const [nome, conn] of Object.entries(conexoes.pools)) {
       try {
-        const pool = conn as Pool;
+        if (conn && typeof (conn as Pool).execute === 'function') {
+          const pool = conn as Pool;
 
-        const [rows] = await pool.execute<Usuario[]>(
-          "SELECT * FROM usuario WHERE email_institucional = ?",
-          [email]
-        );
+          const [rows] = await pool.execute<Usuario[]>(
+            "SELECT * FROM usuario WHERE email_institucional = ?",
+            [email]
+          );
 
-        const usuarios = rows as Usuario[];
+          const usuarios = rows as Usuario[];
 
-        if (usuarios.length > 0) {
-          sistemas.push({
-            nome: nome.toUpperCase(),
-            url: nome === 'sgi' ? "https://sgi.epamig.br" : "https://plataforma.epamig.br",
-            permissao: usuarios[0].perfil || "Usuário",
-          });
+          if (usuarios.length > 0) {
+            sistemas.push({
+              nome: nome.toUpperCase(),
+              url: nome === 'sgi' ? "https://sgi.epamig.br" : "https://plataforma.epamig.br",
+              permissao: usuarios[0].perfil || "Usuário",
+            });
+          }
         }
       } catch (err) {
         console.error(`Erro ao consultar banco ${nome}:`, err);

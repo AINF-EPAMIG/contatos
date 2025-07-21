@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { User, FileText, Truck, IdCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/lib/hooks/useResponsive";
+import Image from "next/image";
 
 // Menu dinâmico de módulos
 const modulos = [
@@ -63,7 +64,7 @@ export default function PainelPage() {
         <div className="flex-shrink-0">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/30 overflow-hidden shadow-lg">
             {userPhoto ? (
-              <img src={userPhoto} alt="Foto do usuário" className="w-full h-full object-cover rounded-xl" />
+              <Image src={userPhoto} alt="Foto do usuário" className="w-full h-full object-cover rounded-xl" width={56} height={56} />
             ) : (
               <User className="text-white" size={28} />
             )}
@@ -89,7 +90,7 @@ export default function PainelPage() {
 
       {/* MENU DINÂMICO DE MÓDULOS */}
       <div className="bg-white rounded-xl shadow w-full">
-        {modulos.map((mod, idx) => (
+        {modulos.map((mod) => (
           <a
             key={mod.href}
             href={mod.href}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import dynamic from "next/dynamic";
-import { User, Instagram, Mail, Phone, BookOpenCheck } from "lucide-react";
+import Image from "next/image";
+import { User, Mail } from "lucide-react";
 import LinksSection from "./LinksSection";
 
 // Tipos
@@ -21,26 +21,6 @@ interface CartaoPageProps {
   params: { cpf: string };
 }
 
-// SSR-safe QRCode
-const QRCode = dynamic(() => import("react-qr-code"), { ssr: false });
-
-// Utils
-function getPrimeiroUltimoNome(nome = ""): string {
-  const partes = nome.trim().split(" ").filter(Boolean);
-  if (partes.length === 0) return "";
-  if (partes.length === 1) return partes[0];
-  return `${partes[0]} ${partes[partes.length - 1]}`;
-}
-function getWhatsappUrl(num?: string): string {
-  const n = num?.replace(/[^\d]/g, "");
-  return n ? `https://wa.me/${n}` : "#";
-}
-function getInstagramUrl(username?: string): string {
-  if (!username) return "#";
-  if (username.startsWith("http")) return username;
-  return `https://instagram.com/${username.replace(/^@/, "")}`;
-}
-
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/cartao-digital?cpf=${cpf}`, {
@@ -55,14 +35,11 @@ export default async function CartaoPage({ params }: CartaoPageProps) {
   const cartao = await getCartaoByCpf(params.cpf);
   if (!cartao) return notFound();
 
-  // Forçar layout mobile/vertical
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000/cartao";
-
   return (
     <div className="min-h-screen p-2 sm:p-4">
       <div className="w-full max-w-sm sm:max-w-md mx-auto py-4 sm:py-8">
         <div className="bg-gradient-to-r from-green-700 to-green-800 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-t-2xl shadow-lg flex flex-col items-center">
-          <img src="/logo_branca.svg" alt="Logo EPAMIG" className="h-10 sm:h-12 mb-2" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.15))' }} />
+          <Image src="/logo_branca.svg" alt="Logo EPAMIG" width={120} height={32} className="h-10 sm:h-12 mb-2 w-auto" style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.15))' }} priority />
           <h1 className="text-lg sm:text-xl font-bold">Cartão Institucional</h1>
         </div>
         <div className="bg-white rounded-b-2xl shadow-2xl border border-gray-200">
@@ -79,16 +56,26 @@ export default async function CartaoPage({ params }: CartaoPageProps) {
   );
 }
 
+function getPrimeiroUltimoNome(nome = ""): string {
+  const partes = nome.trim().split(" ").filter(Boolean);
+  if (partes.length === 0) return "";
+  if (partes.length === 1) return partes[0];
+  return `${partes[0]} ${partes[partes.length - 1]}`;
+}
+
 function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile: boolean }) {
   return (
     <div className={`${isMobile ? 'bg-gradient-to-br from-green-600 to-green-700 px-4 sm:px-6 py-6 sm:py-8' : ''} text-center relative`}>
       <div className={`${isMobile ? 'w-20 h-20 sm:w-24 sm:h-24' : 'w-32 h-32'} mx-auto mb-3 sm:mb-4 rounded-full border-4 border-white bg-white flex items-center justify-center overflow-hidden shadow-xl`}>
         {cartao?.foto ? (
-          <img
+          <Image
             src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
             alt="Foto do usuário"
+            width={isMobile ? 96 : 128}
+            height={isMobile ? 96 : 128}
             className="w-full h-full object-cover"
             style={{ objectPosition: 'center 20%' }}
+            priority
           />
         ) : (
           <User size={isMobile ? 32 : 60} className="text-gray-400 sm:w-10 sm:h-10" />

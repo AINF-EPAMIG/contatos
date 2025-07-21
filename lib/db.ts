@@ -1,6 +1,6 @@
 import mysql from "mysql2/promise";
 
-const pools: Record<string, any> = {};
+const pools: Record<string, unknown> = {};
 
 const bancos = [
   { nome: "sgi", descricao: "SGI WEB" },
@@ -25,7 +25,7 @@ export async function getConexoes() {
       });
 
       const [rows] = await pool.query("SHOW TABLES LIKE 'usuario'");
-      if ((rows as any[]).length > 0) {
+      if ((rows as unknown[]).length > 0) {
         pools[banco.nome] = pool;
       } else {
         console.warn(`Banco '${banco.nome}' ignorado: tabela 'usuario' não existe.`);

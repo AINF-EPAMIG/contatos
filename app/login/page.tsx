@@ -245,7 +245,13 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className={`${isMobile ? 'mobile-button' : ''} w-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 text-base shadow-sm hover:shadow-md transform hover:-translate-y-0.5`}
               >
-                <img src="/google-icon.svg" alt="Google" className="w-5 h-5" />
+                <Image
+                  src="/google-icon.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                />
                 Entrar com Google
               </button>
             </div>

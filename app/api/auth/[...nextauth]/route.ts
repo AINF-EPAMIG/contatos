@@ -10,6 +10,21 @@ const db = mysql.createPool({
   database: process.env.DB_DATABASE,
 });
 
+type UserJwtPayload = {
+  chapa?: string;
+  cpf?: string;
+  cargo?: string;
+  tipo?: string;
+  [key: string]: unknown;
+};
+
+function getUserField(user: unknown, field: string): string | undefined {
+  if (user && typeof user === "object" && field in user) {
+    return (user as Record<string, unknown>)[field] as string | undefined;
+  }
+  return undefined;
+}
+
 const handler = NextAuth({
   providers: [
     GoogleProvider({
@@ -53,10 +68,10 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        token.chapa = (user as any).chapa;
-        token.cpf = (user as any).cpf;
-        token.cargo = (user as any).cargo;
-        token.tipo = (user as any).tipo;
+        token.chapa = getUserField(user, "chapa");
+        token.cpf = getUserField(user, "cpf");
+        token.cargo = getUserField(user, "cargo");
+        token.tipo = getUserField(user, "tipo");
       }
       
       if (account?.provider === "google" && token.email) {
@@ -83,10 +98,10 @@ const handler = NextAuth({
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).chapa = token.chapa;
-        (session.user as any).cpf = token.cpf;
-        (session.user as any).cargo = token.cargo;
-        (session.user as any).tipo = token.tipo;
+        (session.user as UserJwtPayload).chapa = typeof token.chapa === 'string' ? token.chapa : undefined;
+        (session.user as UserJwtPayload).cpf = typeof token.cpf === 'string' ? token.cpf : undefined;
+        (session.user as UserJwtPayload).cargo = typeof token.cargo === 'string' ? token.cargo : undefined;
+        (session.user as UserJwtPayload).tipo = typeof token.tipo === 'string' ? token.tipo : undefined;
       }
       return session;
     },
