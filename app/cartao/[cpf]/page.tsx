@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { User, Mail } from "lucide-react";
 import LinksSection from "./LinksSection";
+import mysql from "mysql2/promise";
 
 // Tipos
 export type CartaoDigital = {
@@ -24,24 +25,20 @@ interface CartaoPageProps {
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   try {
-    const isProd = process.env.NODE_ENV === "production";
-    const baseUrl = isProd
-      ? process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
-      : "http://localhost:3000";
-    console.log("Ambiente:", process.env.NODE_ENV);
-    console.log("baseUrl usado:", baseUrl);
-    const url = `${baseUrl}/api/cartao-digital?cpf=${cpf}`;
-    console.log("Buscando cartão em:", url);
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Erro ao buscar cartão:", res.status, text);
-      return null;
-    }
-    const data = await res.json();
-    return data.cartao || null;
+    const db = mysql.createPool({
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_DATABASE,
+    });
+    const [rows] = await db.execute(
+      "SELECT * FROM cartao_digital WHERE cpf = ? LIMIT 1",
+      [cpf]
+    ) as [any[], any[]];
+    if (!rows.length) return null;
+    return rows[0] as CartaoDigital;
   } catch (err) {
-    console.error("Erro inesperado em getCartaoByCpf:", err);
+    console.error("Erro ao buscar cartão direto do banco:", err);
     return null;
   }
 }
