@@ -23,7 +23,8 @@ interface CartaoPageProps {
 
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
-  const res = await fetch(`/api/cartao-digital?cpf=${cpf}`, {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const res = await fetch(`${baseUrl}/api/cartao-digital?cpf=${cpf}`, {
     cache: "no-store"
   });
   if (!res.ok) return null;
