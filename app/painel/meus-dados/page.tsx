@@ -399,7 +399,7 @@ function QRCodeSection({
         <div className="bg-white rounded-xl p-4 sm:p-6 text-center border border-gray-100">
           <div className="bg-white rounded-xl p-3 sm:p-4 inline-block shadow-md">
             <QRCode 
-              value={`${baseUrl}/${cpf}`} 
+              value={`${baseUrl}/cartao/${cpf}`} 
               size={80} 
               className="sm:w-24 sm:h-24"
             />
@@ -417,7 +417,7 @@ function QRCodeSection({
         <div className="bg-white rounded-xl p-4 inline-block border border-gray-100">
           <div className="bg-white rounded-lg p-3 shadow-md">
             <QRCode 
-              value={`${baseUrl}/${cpf}`} 
+              value={`${baseUrl}/cartao/${cpf}`} 
               size={120} 
             />
           </div>
