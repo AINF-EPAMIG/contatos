@@ -63,7 +63,7 @@ function getPrimeiroUltimoNome(nome = ""): string {
   return `${partes[0]} ${partes[partes.length - 1]}`;
 }  
 
-
+ 
 function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile: boolean }) {
   return (
     <div className={`${isMobile ? 'bg-gradient-to-br from-green-600 to-green-700 px-4 sm:px-6 py-6 sm:py-8' : ''} text-center relative`}>
