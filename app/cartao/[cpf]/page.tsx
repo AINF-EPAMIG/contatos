@@ -23,13 +23,25 @@ interface CartaoPageProps {
 
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/cartao-digital?cpf=${cpf}`, {
-    cache: "no-store"
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.cartao || null;
+  try {
+    const isProd = process.env.NODE_ENV === "production";
+    const baseUrl = isProd
+      ? process.env.NEXTAUTH_URL
+      : "http://localhost:3000";
+    const url = `${baseUrl}/api/cartao-digital?cpf=${cpf}`;
+    console.log("Buscando cartão em:", url);
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Erro ao buscar cartão:", res.status, text);
+      return null;
+    }
+    const data = await res.json();
+    return data.cartao || null;
+  } catch (err) {
+    console.error("Erro inesperado em getCartaoByCpf:", err);
+    return null;
+  }
 }
 
 export default async function CartaoPage({ params }: CartaoPageProps) {
@@ -72,7 +84,7 @@ function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile:
         {cartao?.foto ? (
           <Image
             src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
-            alt="Foto do usuário"
+            alt="Foto do usuário"git 
             width={isMobile ? 96 : 128}
             height={isMobile ? 96 : 128}
             className="w-full h-full object-cover"
