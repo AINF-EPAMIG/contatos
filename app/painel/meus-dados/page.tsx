@@ -66,12 +66,14 @@ export default function MeusDadosPage() {
   const user = session?.user as UserData | undefined;
 
   const [cartao, setCartao] = useState<CartaoDigital | null>(null);
-  const [baseUrl, setBaseUrl] = useState("");
+  const [baseUrl, setBaseUrl] = useState(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  );
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setBaseUrl(window.location.origin);
+      setBaseUrl(process.env.NEXT_PUBLIC_BASE_URL || window.location.origin);
     }
   }, []);
 
