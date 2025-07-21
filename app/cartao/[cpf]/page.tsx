@@ -24,13 +24,7 @@ interface CartaoPageProps {
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   try {
-    const isProd = process.env.NODE_ENV === "production";
-    const baseUrl = isProd
-      ? process.env.NEXTAUTH_URL
-      : "http://localhost:3000";
-    const url = `${baseUrl}/api/cartao-digital?cpf=${cpf}`;
-    console.log("Buscando cartão em:", url);
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(`/api/cartao-digital?cpf=${cpf}`, { cache: "no-store" });
     if (!res.ok) {
       const text = await res.text();
       console.error("Erro ao buscar cartão:", res.status, text);
