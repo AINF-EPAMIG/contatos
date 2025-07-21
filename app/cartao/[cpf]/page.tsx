@@ -24,10 +24,12 @@ interface CartaoPageProps {
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   try {
-    const baseUrl =
-      process.env.NEXTAUTH_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
-      "http://localhost:3000";
+    const isProd = process.env.NODE_ENV === "production";
+    const baseUrl = isProd
+      ? process.env.NEXTAUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
+      : "http://localhost:3000";
+    console.log("Ambiente:", process.env.NODE_ENV);
+    console.log("baseUrl usado:", baseUrl);
     const url = `${baseUrl}/api/cartao-digital?cpf=${cpf}`;
     console.log("Buscando cartão em:", url);
     const res = await fetch(url, { cache: "no-store" });
