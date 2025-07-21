@@ -62,7 +62,7 @@ function getPrimeiroUltimoNome(nome = ""): string {
   if (partes.length === 1) return partes[0];
   return `${partes[0]} ${partes[partes.length - 1]}`;
 }  
-
+  
    
 function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile: boolean }) {
   return (
