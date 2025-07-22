@@ -135,4 +135,4 @@ async function handleRequest(request: NextRequest, method: "POST" | "PUT") {
       { status: 500 }
     );
   }
-} 
+}
