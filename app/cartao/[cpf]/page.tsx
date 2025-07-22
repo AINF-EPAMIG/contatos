@@ -3,6 +3,7 @@ import Image from "next/image";
 import { User, Mail } from "lucide-react";
 import LinksSection from "./LinksSection";
 import mysql from "mysql2/promise";
+import type { RowDataPacket } from "mysql2/promise";
 
 // Tipos
 export type CartaoDigital = {
@@ -25,19 +26,18 @@ interface CartaoPageProps {
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   try {
-    console.log("CPF recebido:", cpf);
     const db = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
     });
-    const [rows] = await db.execute(
+    const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT * FROM cartao_digital WHERE cpf = ? LIMIT 1",
       [cpf]
-    ) as [any[], any[]];
-    console.log("Resultado da consulta:", rows);
+    );
     if (!rows.length) return null;
+    // Faz o cast para CartaoDigital
     return rows[0] as CartaoDigital;
   } catch (err) {
     console.error("Erro ao buscar cartão direto do banco:", err);
