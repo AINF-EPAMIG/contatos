@@ -25,6 +25,7 @@ interface CartaoPageProps {
 // Busca dados do cartão institucional pela API interna
 async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
   try {
+    console.log("CPF recebido:", cpf);
     const db = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
@@ -35,6 +36,7 @@ async function getCartaoByCpf(cpf: string): Promise<CartaoDigital | null> {
       "SELECT * FROM cartao_digital WHERE cpf = ? LIMIT 1",
       [cpf]
     ) as [any[], any[]];
+    console.log("Resultado da consulta:", rows);
     if (!rows.length) return null;
     return rows[0] as CartaoDigital;
   } catch (err) {
@@ -108,4 +110,4 @@ function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile:
       )}
     </div>
   );
-} 
+}
