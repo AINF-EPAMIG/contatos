@@ -127,7 +127,7 @@ async function handleCartao(formData: FormData) {
 
       const urlUpload =
         process.env.YII2_UPLOAD_URL ||
-        "http://localhost/quadro_funcionarios/web/servidor/upload-foto";
+        "https://epamigsistema.com/quadro_funcionarios/web/servidor/upload-foto";
 
       const uploadResponse = await fetch(urlUpload, {
         method: "POST",
