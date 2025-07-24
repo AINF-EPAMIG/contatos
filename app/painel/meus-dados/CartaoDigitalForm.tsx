@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
-import { User, Camera, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Camera, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 type CartaoDigital = {
@@ -28,7 +28,32 @@ type CartaoDigitalFormProps = {
   onCancel: () => void;
 };
 
-export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }: CartaoDigitalFormProps) {
+// Função utilitária: monta URL para exibir a foto
+function getFotoUrl(foto: string | null): string {
+  if (!foto) return "/sem-foto.jpg"; // Fallback padrão (coloque a imagem em /public/)
+
+  // 1. Se for uma URL absoluta
+  if (/^https?:\/\//i.test(foto)) return foto;
+
+  // 2. Se vier um path absoluto (raro, mas seguro)
+  if (foto.startsWith("/")) return foto;
+
+  // 3. Usa a variável de ambiente BASE_FOTO_URL se disponível,
+  //    senão, usa um path padrão local (ideal para localhost/dev)
+  const base =
+    (process.env.NEXT_PUBLIC_BASE_FOTO_URL?.replace(/\/?$/, "/")) ||
+    "/quadro_funcionarios/web/fotos/";
+
+  return `${base}${foto}`;
+}
+
+
+export default function CartaoDigitalForm({
+  user,
+  cartao,
+  onSuccess,
+  onCancel,
+}: CartaoDigitalFormProps) {
   const [formData, setFormData] = useState({
     nome: cartao?.nome || user?.name || "",
     email: cartao?.email || user?.email || "",
@@ -40,27 +65,33 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
   });
 
   const [foto, setFoto] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(
-    cartao?.foto ? (cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`) : null
-  );
+  const [fotoPreview, setFotoPreview] = useState<string>("/sem-foto.jpg");
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // Atualiza preview inicial vindo do banco (cartao)
+  useEffect(() => {
+    if (!foto) {
+      setFotoPreview(cartao?.foto ? getFotoUrl(cartao.foto) : "/sem-foto.jpg");
+    }
+  }, [cartao, foto]);
 
+  // Atualiza preview ao selecionar arquivo novo
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setFoto(file);
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setFotoPreview(e.target?.result as string);
+      reader.onload = (ev) => {
+        setFotoPreview(ev.target?.result as string); // Preview local
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,10 +112,12 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
       if (foto) {
         formDataToSend.append("foto", foto);
       }
+      if (cartao) {
+        formDataToSend.append("_method", "PUT");
+      }
 
-      const method = cartao ? "PUT" : "POST";
       const response = await fetch("/api/cartao-digital", {
-        method,
+        method: "POST",
         body: formDataToSend,
       });
 
@@ -92,6 +125,7 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
         throw new Error("Erro ao salvar cartão digital");
       }
 
+      setFoto(null);
       onSuccess();
     } catch (error) {
       console.error("Erro:", error);
@@ -103,7 +137,7 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
 
   const removeFoto = () => {
     setFoto(null);
-    setFotoPreview(null);
+    setFotoPreview("/sem-foto.jpg");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -116,19 +150,19 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
         <label className="block text-sm font-medium text-gray-700">
           Foto do Perfil
         </label>
-        
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
-            {fotoPreview ? (
-              <div className="relative group">
-                <Image
-                  src={fotoPreview}
-                  alt="Preview"
-                  width={96}
-                  height={96}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-green-200 shadow-lg"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
+            <div className="relative group">
+              <Image
+                src={fotoPreview}
+                alt="Preview"
+                width={96}
+                height={96}
+                className="w-24 h-24 rounded-full object-cover border-4 border-green-200 shadow-lg"
+                unoptimized
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
+                {fotoPreview !== "/sem-foto.jpg" && (
                   <button
                     type="button"
                     onClick={removeFoto}
@@ -136,15 +170,10 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
                   >
                     <Trash2 size={16} />
                   </button>
-                </div>
+                )}
               </div>
-            ) : (
-              <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center border-4 border-dashed border-green-300">
-                <User className="text-green-600" size={32} />
-              </div>
-            )}
+            </div>
           </div>
-          
           <div className="flex gap-2">
             <button
               type="button"
@@ -152,10 +181,9 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
               className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
             >
               <Camera size={16} />
-              {fotoPreview ? "Trocar Foto" : "Adicionar Foto"}
+              {fotoPreview && fotoPreview !== "/sem-foto.jpg" ? "Trocar Foto" : "Adicionar Foto"}
             </button>
-            
-            {fotoPreview && (
+            {fotoPreview && fotoPreview !== "/sem-foto.jpg" && (
               <button
                 type="button"
                 onClick={removeFoto}
@@ -166,7 +194,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
               </button>
             )}
           </div>
-          
           <input
             ref={fileInputRef}
             type="file"
@@ -174,7 +201,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             onChange={handleFotoChange}
             className="hidden"
           />
-          
           <p className="text-xs text-gray-500 text-center">
             Formatos aceitos: JPG, PNG. Máximo 5MB
           </p>
@@ -197,7 +223,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder="Digite seu nome completo"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Email *
@@ -212,7 +237,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder="seu.email@exemplo.com"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Cargo *
@@ -227,7 +251,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder="Seu cargo atual"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             LinkedIn
@@ -241,7 +264,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder="https://linkedin.com/in/seu-perfil"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             WhatsApp
@@ -255,7 +277,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder=""
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Instagram
@@ -269,7 +290,6 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
             placeholder="@seu_usuario"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Lattes
@@ -287,14 +307,13 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
 
       {/* Botões */}
       <div className="flex gap-3 pt-4">
-      <button
-  type="button"
-  onClick={onCancel}
-  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
->
-  Cancelar
-</button>
-
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
+        >
+          Cancelar
+        </button>
         <button
           type="submit"
           disabled={loading}
@@ -305,9 +324,7 @@ export default function CartaoDigitalForm({ user, cartao, onSuccess, onCancel }:
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               Salvando...
             </>
-          ) : (
-            cartao ? "Atualizar" : "Criar"
-          )}
+          ) : cartao ? "Atualizar" : "Criar"}
         </button>
       </div>
     </form>

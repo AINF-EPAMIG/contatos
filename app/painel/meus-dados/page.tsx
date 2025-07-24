@@ -60,6 +60,14 @@ function getInstagramUrl(username: string): string {
   return `https://instagram.com/${username.replace(/^@/, "")}`;
 }
 
+// --- FUNÇÃO NOVA: Sempre monta o path certo da foto! ---
+function getFotoUrl(foto: string | null) {
+  if (!foto) return "/sem-foto.jpg"; // Vai buscar do /public
+  if (foto.startsWith("http")) return foto;
+  const base = process.env.NEXT_PUBLIC_BASE_FOTO_URL?.replace(/\/?$/, "/") ?? "";
+  return `${base}${foto}`;
+}
+
 export default function MeusDadosPage() {
   const { data: session, status } = useSession();
   const { isMobile, isClient } = useResponsive();
@@ -263,12 +271,13 @@ function ProfileSection({
       <div className={`${isMobile ? 'w-20 h-20 sm:w-24 sm:h-24' : 'w-32 h-32'} mx-auto mb-3 sm:mb-4 rounded-full border-4 border-white bg-white flex items-center justify-center overflow-hidden shadow-xl`}>
         {cartao?.foto ? (
           <Image
-            src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
+            src={getFotoUrl(cartao.foto)}
             alt="Foto do usuário"
             className="w-full h-full object-cover"
             style={{ objectPosition: 'center 20%' }}
             width={isMobile ? 96 : 128}
             height={isMobile ? 96 : 128}
+            unoptimized
           />
         ) : (
           <User size={isMobile ? 32 : 60} className="text-gray-400 sm:w-10 sm:h-10" />
