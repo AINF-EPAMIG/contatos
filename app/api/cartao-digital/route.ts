@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import FormDataNode from "form-data";
@@ -20,7 +19,6 @@ const db = mysql.createPool({
   database: process.env.DB_DATABASE!,
 });
 
-// Tipagem dos campos do cartão
 type CartaoDigital = {
   id?: number;
   cpf: string;
@@ -39,11 +37,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     return await handleCartao(formData);
   } catch (error) {
-    console.error("❌ Erro no POST EXTERNO:", error);
-    return NextResponse.json(
-      { error: "Erro interno do servidor", detail: String(error) },
-      { status: 500 }
-    );
+    console.error("❌ Erro no POST:", error);
+    return NextResponse.json({ error: "Erro interno", detail: String(error) }, { status: 500 });
   }
 }
 
@@ -53,10 +48,7 @@ export async function GET(request: NextRequest) {
   const email = searchParams.get("email");
 
   if (!cpf && !email) {
-    return NextResponse.json(
-      { error: "CPF ou email obrigatório" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "CPF ou email obrigatório" }, { status: 400 });
   }
 
   try {
@@ -68,10 +60,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ cartao: rows[0] || null });
   } catch (error) {
     console.error("❌ Erro no GET:", error);
-    return NextResponse.json(
-      { error: "Erro interno no servidor", detail: String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erro interno", detail: String(error) }, { status: 500 });
   }
 }
 
@@ -87,13 +76,10 @@ async function handleCartao(formData: FormData) {
   }
 
   if (!values.cpf || !values.nome || !values.email || !values.cargo) {
-    return NextResponse.json(
-      { error: "Campos obrigatórios ausentes" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
   }
 
-  // --- Upload da foto para Yii2 ---
+  // --- Upload da Foto ---
   let fotoNome: string | null = null;
   const fotoField = formData.get("foto") as File | null;
 
@@ -107,15 +93,13 @@ async function handleCartao(formData: FormData) {
   ) {
     const ext = fotoField.name.split(".").pop()?.toLowerCase() || "";
     if (!["jpg", "jpeg", "png"].includes(ext)) {
-      return NextResponse.json(
-        { error: "Apenas arquivos JPG ou PNG são permitidos" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Apenas arquivos JPG ou PNG" }, { status: 400 });
     }
+
     try {
       const safeName = sanitizeFilename(fotoField.name);
-
       const buffer = Buffer.from(await fotoField.arrayBuffer());
+
       const formFoto = new FormDataNode();
       formFoto.append("foto", buffer, {
         filename: safeName,
@@ -126,13 +110,21 @@ async function handleCartao(formData: FormData) {
         process.env.YII2_UPLOAD_URL ||
         "https://epamigsistema.com/quadro_funcionarios/web/servidor/upload-foto";
 
+      // Logs de debug
+      console.log("📤 Enviando imagem:", safeName);
+      console.log("➡️ URL destino:", urlUpload);
+      console.log("🧾 Headers:", formFoto.getHeaders());
+
       const uploadResponse = await fetch(urlUpload, {
         method: "POST",
-        body: formFoto as any,
+        body: formFoto as unknown as BodyInit,
         headers: formFoto.getHeaders(),
       });
 
+      console.log("✅ Status resposta:", uploadResponse.status);
       const raw = await uploadResponse.text();
+      console.log("📥 Corpo resposta:", raw);
+
       let json: { success?: boolean; url?: string; file?: string; message?: string };
       try {
         json = JSON.parse(raw);
@@ -143,20 +135,16 @@ async function handleCartao(formData: FormData) {
       if (json.success && (json.url || json.file)) {
         fotoNome = json.file ?? (json.url?.split("/fotos/")[1] || null);
       } else {
-        return NextResponse.json(
-          { error: "Erro ao enviar imagem", detail: json.message },
-          { status: 500 }
-        );
+        console.error("⚠️ Upload falhou:", json);
+        return NextResponse.json({ error: "Erro ao enviar imagem", detail: json.message }, { status: 500 });
       }
     } catch (e) {
-      return NextResponse.json(
-        { error: "Erro no upload", detail: String(e) },
-        { status: 500 }
-      );
+      console.error("❌ Erro no upload:", e);
+      return NextResponse.json({ error: "Erro no upload", detail: String(e) }, { status: 500 });
     }
   }
 
-  // --- Salvar no MySQL ---
+  // --- Inserir/Atualizar MySQL ---
   try {
     let updateSql = `UPDATE cartao_digital SET nome = ?, email = ?, cargo = ?, linkedin = ?, whatsapp = ?, instagram = ?, lattes = ?`;
     const updateParams = [
@@ -196,9 +184,7 @@ async function handleCartao(formData: FormData) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Erro ao salvar dados", detail: String(error) },
-      { status: 500 }
-    );
+    console.error("❌ Erro ao salvar no banco:", error);
+    return NextResponse.json({ error: "Erro ao salvar dados", detail: String(error) }, { status: 500 });
   }
 }
