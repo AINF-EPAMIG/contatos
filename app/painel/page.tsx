@@ -64,7 +64,7 @@ export default function PainelPage() {
         <div className="flex-shrink-0">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/30 overflow-hidden shadow-lg">
             {userPhoto ? (
-             <Image
+     <Image
   src={
     userPhoto.startsWith("http")
       ? userPhoto
@@ -76,6 +76,7 @@ export default function PainelPage() {
   height={56}
   priority
 />
+
 
             ) : (
               <User className="text-white" size={28} />
