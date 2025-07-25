@@ -129,12 +129,18 @@ async function handleCartao(formData: FormData) {
         process.env.YII2_UPLOAD_URL ||
         "https://epamigsistema.com/quadro_funcionarios/web/servidor/upload-foto";
 
+        /*
       const uploadResponse = await fetch(urlUpload, {
         method: "POST",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         body: formFoto as any, // FormData do node, ok for edge/serverless
         headers: formFoto.getHeaders(),
       });
+      */
+     const uploadResponse = await fetch(urlUpload, {
+  method: "POST",
+  body: formFoto as any, // FormData automático
+});
 
       const raw = await uploadResponse.text();
       let json: { success?: boolean; url?: string; file?: string; message?: string };
