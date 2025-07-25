@@ -83,15 +83,20 @@ function ProfileSection({ cartao, isMobile }: { cartao: CartaoDigital; isMobile:
     <div className={`${isMobile ? 'bg-gradient-to-br from-green-600 to-green-700 px-4 sm:px-6 py-6 sm:py-8' : ''} text-center relative`}>
       <div className={`${isMobile ? 'w-20 h-20 sm:w-24 sm:h-24' : 'w-32 h-32'} mx-auto mb-3 sm:mb-4 rounded-full border-4 border-white bg-white flex items-center justify-center overflow-hidden shadow-xl`}>
         {cartao?.foto ? (
-          <Image
-            src={cartao.foto.startsWith("http") ? cartao.foto : `/uploads/${cartao.foto}`}
-            alt="Foto do usuário"
-            width={isMobile ? 96 : 128}
-            height={isMobile ? 96 : 128}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 20%' }}
-            priority
-          />
+        <Image
+  src={
+    cartao.foto.startsWith("http")
+      ? cartao.foto
+      : `https://epamigsistema.com/quadro_funcionarios/web/fotos/${cartao.foto}`
+  }
+  alt="Foto do usuário"
+  width={isMobile ? 96 : 128}
+  height={isMobile ? 96 : 128}
+  className="w-full h-full object-cover"
+  style={{ objectPosition: 'center 20%' }}
+  priority
+/>
+
         ) : (
           <User size={isMobile ? 32 : 60} className="text-gray-400 sm:w-10 sm:h-10" />
         )}
