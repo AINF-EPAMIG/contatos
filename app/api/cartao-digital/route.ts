@@ -136,7 +136,7 @@ async function handleCartao(formData: FormData) {
         body: formFoto as any, // FormData do node, ok for edge/serverless
         headers: formFoto.getHeaders(),
       });
-      */
+      */ 
      const uploadResponse = await fetch(urlUpload, {
   method: "POST",
   body: formFoto as any, // FormData automático
