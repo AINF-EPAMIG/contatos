@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
 import FormDataNode from "form-data";
@@ -36,8 +37,6 @@ type CartaoDigital = {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    // _method não é mais utilizado, só serve para backend diferenciar PUT/POST se quiser
-    // const method = formData.get("_method") === "PUT" ? "PUT" : "POST";
     return await handleCartao(formData);
   } catch (error) {
     console.error("❌ Erro no POST EXTERNO:", error);
@@ -76,7 +75,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleCartao(formData: FormData) {
   const campos: Array<keyof CartaoDigital> = [
     "cpf", "nome", "email", "cargo", "linkedin",
@@ -118,7 +116,6 @@ async function handleCartao(formData: FormData) {
       const safeName = sanitizeFilename(fotoField.name);
 
       const buffer = Buffer.from(await fotoField.arrayBuffer());
-      // Usando o form-data do node para multipart
       const formFoto = new FormDataNode();
       formFoto.append("foto", buffer, {
         filename: safeName,
@@ -129,18 +126,11 @@ async function handleCartao(formData: FormData) {
         process.env.YII2_UPLOAD_URL ||
         "https://epamigsistema.com/quadro_funcionarios/web/servidor/upload-foto";
 
-        /*
       const uploadResponse = await fetch(urlUpload, {
         method: "POST",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        body: formFoto as any, // FormData do node, ok for edge/serverless
+        body: formFoto as any,
         headers: formFoto.getHeaders(),
       });
-      */ 
-     const uploadResponse = await fetch(urlUpload, {
-  method: "POST",
-  body: formFoto as any, // FormData automático
-});
 
       const raw = await uploadResponse.text();
       let json: { success?: boolean; url?: string; file?: string; message?: string };
