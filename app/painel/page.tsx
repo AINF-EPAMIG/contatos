@@ -40,7 +40,7 @@ export default function PainelPage() {
           if (response.ok) {
             const data = await response.json();
             if (data.cartao && data.cartao.foto) {
-              setUserPhoto(`/uploads/${data.cartao.foto}`);
+              setUserPhoto(getFotoUrl(data.cartao.foto));
             }
           }
         } catch (error) {
