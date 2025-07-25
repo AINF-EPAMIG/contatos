@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import mysql, { RowDataPacket, ResultSetHeader } from "mysql2/promise";
-import FormDataNode from "form-data";
 
 // Função para sanitizar o nome do arquivo
 function sanitizeFilename(filename: string): string {
@@ -37,8 +36,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     return await handleCartao(formData);
   } catch (error) {
-    console.error("❌ Erro no POST:", error);
-    return NextResponse.json({ error: "Erro interno", detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro interno", detail: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -48,7 +49,10 @@ export async function GET(request: NextRequest) {
   const email = searchParams.get("email");
 
   if (!cpf && !email) {
-    return NextResponse.json({ error: "CPF ou email obrigatório" }, { status: 400 });
+    return NextResponse.json(
+      { error: "CPF ou email obrigatório" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -59,8 +63,10 @@ export async function GET(request: NextRequest) {
     const [rows] = await db.execute<RowDataPacket[]>(query, [cpf || email]);
     return NextResponse.json({ cartao: rows[0] || null });
   } catch (error) {
-    console.error("❌ Erro no GET:", error);
-    return NextResponse.json({ error: "Erro interno", detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro interno", detail: String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -76,7 +82,10 @@ async function handleCartao(formData: FormData) {
   }
 
   if (!values.cpf || !values.nome || !values.email || !values.cargo) {
-    return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Campos obrigatórios ausentes" },
+      { status: 400 }
+    );
   }
 
   // --- Upload da Foto ---
@@ -93,38 +102,34 @@ async function handleCartao(formData: FormData) {
   ) {
     const ext = fotoField.name.split(".").pop()?.toLowerCase() || "";
     if (!["jpg", "jpeg", "png"].includes(ext)) {
-      return NextResponse.json({ error: "Apenas arquivos JPG ou PNG" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Apenas arquivos JPG ou PNG" },
+        { status: 400 }
+      );
     }
 
     try {
       const safeName = sanitizeFilename(fotoField.name);
       const buffer = Buffer.from(await fotoField.arrayBuffer());
 
-      const formFoto = new FormDataNode();
-      formFoto.append("foto", buffer, {
-        filename: safeName,
-        contentType: fotoField.type || "application/octet-stream",
-      });
+      // ✅ Correção crítica: usar FormData nativo
+      const formFoto = new FormData();
+      formFoto.append(
+        "foto",
+        new Blob([buffer], { type: fotoField.type }),
+        safeName
+      );
 
       const urlUpload =
         process.env.YII2_UPLOAD_URL ||
         "https://epamigsistema.com/quadro_funcionarios/web/servidor/upload-foto";
 
-      // Logs de debug
-      console.log("📤 Enviando imagem:", safeName);
-      console.log("➡️ URL destino:", urlUpload);
-      console.log("🧾 Headers:", formFoto.getHeaders());
-
       const uploadResponse = await fetch(urlUpload, {
         method: "POST",
-        body: formFoto as unknown as BodyInit,
-        headers: formFoto.getHeaders(),
+        body: formFoto, // ✅ sem headers manuais!
       });
 
-      console.log("✅ Status resposta:", uploadResponse.status);
       const raw = await uploadResponse.text();
-      console.log("📥 Corpo resposta:", raw);
-
       let json: { success?: boolean; url?: string; file?: string; message?: string };
       try {
         json = JSON.parse(raw);
@@ -135,12 +140,16 @@ async function handleCartao(formData: FormData) {
       if (json.success && (json.url || json.file)) {
         fotoNome = json.file ?? (json.url?.split("/fotos/")[1] || null);
       } else {
-        console.error("⚠️ Upload falhou:", json);
-        return NextResponse.json({ error: "Erro ao enviar imagem", detail: json.message }, { status: 500 });
+        return NextResponse.json(
+          { error: "Erro ao enviar imagem", detail: json.message },
+          { status: 500 }
+        );
       }
     } catch (e) {
-      console.error("❌ Erro no upload:", e);
-      return NextResponse.json({ error: "Erro no upload", detail: String(e) }, { status: 500 });
+      return NextResponse.json(
+        { error: "Erro no upload", detail: String(e) },
+        { status: 500 }
+      );
     }
   }
 
@@ -184,7 +193,9 @@ async function handleCartao(formData: FormData) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("❌ Erro ao salvar no banco:", error);
-    return NextResponse.json({ error: "Erro ao salvar dados", detail: String(error) }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro ao salvar dados", detail: String(error) },
+      { status: 500 }
+    );
   }
 }
