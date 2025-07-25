@@ -67,12 +67,12 @@ export default function PainelPage() {
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/30 overflow-hidden shadow-lg">
             {userPhoto ? (
 <Image
-  src={getFotoUrl(userPhoto)}
-  alt="Foto do usuário"
-  width={56}
-  height={56}
-  className="rounded-full"
-/>
+    src={userPhoto} // ✅ aqui você já passou pela função getFotoUrl no useEffect
+    alt="Foto do usuário"
+    width={56}
+    height={56}
+    className="rounded-full"
+  />
 
 
 
