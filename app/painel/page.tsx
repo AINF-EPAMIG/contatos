@@ -64,7 +64,19 @@ export default function PainelPage() {
         <div className="flex-shrink-0">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center border-2 border-white/30 overflow-hidden shadow-lg">
             {userPhoto ? (
-              <Image src={userPhoto} alt="Foto do usuário" className="w-full h-full object-cover rounded-xl" width={56} height={56} />
+             <Image
+  src={
+    userPhoto.startsWith("http")
+      ? userPhoto
+      : `https://epamigsistema.com/quadro_funcionarios/web/fotos/${userPhoto}`
+  }
+  alt="Foto do usuário"
+  className="w-full h-full object-cover rounded-xl"
+  width={56}
+  height={56}
+  priority
+/>
+
             ) : (
               <User className="text-white" size={28} />
             )}
