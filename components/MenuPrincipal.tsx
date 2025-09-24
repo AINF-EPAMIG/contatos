@@ -10,7 +10,7 @@ const menuComum = [
 ];
 
 const menuEspecial = [
-  { label: 'Geral', icon: <HomeIcon className="w-5 h-5" />, href: '/painel' },
+  { label: 'Geral', icon: <HomeIcon className="w-5 h-5" />, href: '/' },
   { label: 'Receitas', icon: <ChartBarIcon className="w-5 h-5" />, href: '/receitas' },
   { label: 'Despesas', icon: <ArrowTrendingDownIcon className="w-5 h-5" />, href: '/despesas' },
   { label: 'Metafísicas', icon: <BoltIcon className="w-5 h-5" />, href: '/metafisicas' },
