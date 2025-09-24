@@ -1,52 +1,26 @@
+// Função utilitária para múltiplas conexões (mock simples)
+export async function getConexoes() {
+  return {
+    pools: {
+      saude_mental: saudeMentalDB,
+      quadro_funcionarios: funcionariosDB,
+    },
+  };
+}
 import mysql from "mysql2/promise";
 
-const pools: Record<string, unknown> = {};
+// Conexão com banco central de funcionários
+export const funcionariosDB = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: "quadro_funcionarios",
+});
 
-const bancos = [
-  { nome: "sgi", descricao: "SGI WEB" },
-  { nome: "plataforma", descricao: "Plataforma de Pesquisa 2.0" },
-];
-
-export async function getConexoes() {
-  if (Object.keys(pools).length > 0) {
-    return montarRetorno();
-  }
-
-  for (const banco of bancos) {
-    try {
-      const pool = mysql.createPool({
-        host: "localhost",
-        user: "root",
-        password: "",
-        database: banco.nome,
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-      });
-
-      const [rows] = await pool.query("SHOW TABLES LIKE 'usuario'");
-      if ((rows as unknown[]).length > 0) {
-        pools[banco.nome] = pool;
-      } else {
-        console.warn(`Banco '${banco.nome}' ignorado: tabela 'usuario' não existe.`);
-      }
-    } catch (err) {
-      console.error(`Erro ao conectar ao banco '${banco.nome}':`, err);
-    }
-  }
-
-  return montarRetorno();
-}
-
-function montarRetorno() {
-  const sistemasDisponiveis = Object.keys(pools).map((db) => {
-    const bancoInfo = bancos.find((b) => b.nome === db);
-    return {
-      nome: bancoInfo ? bancoInfo.descricao : `Sistema (${db})`,
-      database: db,
-      permissao: 'Usuário Padrão',
-    };
-  });
-
-  return { pools, sistemasDisponiveis };
-}
+// Conexão com banco de saúde mental
+export const saudeMentalDB = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: "saude_mental",
+});

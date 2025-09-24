@@ -5,11 +5,11 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Badge, IdCard, Eye, EyeOff, ArrowLeft, Wifi, Shield, Zap } from 'lucide-react'
-import { useResponsive } from '@/lib/hooks/useResponsive'
+
 
 export default function LoginPage() {
   const router = useRouter()
-  const { isMobile, isClient } = useResponsive()
+
   const [chapa, setChapa] = useState('')
   const [cpf, setCpf] = useState('')
   const [error, setError] = useState('')
@@ -45,17 +45,9 @@ export default function LoginPage() {
     signIn('google')
   }
 
-  // Renderização condicional para evitar hidratação
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-green-600 flex items-center justify-center overflow-hidden">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-      </div>
-    )
-  }
 
   return (
-    <div className={`${isMobile ? 'mobile-app' : 'min-h-screen'} bg-green-600 relative overflow-hidden`}>
+  <div className="min-h-screen bg-green-600 relative overflow-hidden">
       {/* Background Pattern - Criativo mas sutil */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-full h-full">
@@ -67,66 +59,29 @@ export default function LoginPage() {
       </div>
 
       {/* Status Bar Mobile - Só aparece em mobile */}
-      {isMobile && (
-        <div className="h-6 bg-black/20 flex items-center justify-between px-4 text-white text-xs mobile-safe-top relative z-10">
-          <span></span>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-2 border border-white/30 rounded-sm">
-              <div className="w-3 h-1 bg-white rounded-sm m-0.5"></div>
-            </div>
-            <div className="w-1 h-1 bg-white rounded-full"></div>
-            <div className="w-1 h-1 bg-white rounded-full"></div>
-            <div className="w-1 h-1 bg-white rounded-full"></div>
-          </div>
-        </div>
-      )}
 
       {/* Header - Design mais clean */}
       <div className="bg-white/5 border-b border-white/10 px-4 py-3 flex items-center mobile-safe-left mobile-safe-right relative z-10">
-        {isMobile ? (
-          <>
-            <button className="text-white/80 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all mobile-tap-highlight">
-              <ArrowLeft size={20} />
-            </button>
-            <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-3">
-                <div className="relative flex items-center">
-                  <Image
-                    src="/logo_branca.svg"
-                    alt="EPAMIG"
-                    width={80}
-                    height={30}
-                    className="h-6 w-auto"
-                    priority
-                  />
-                </div>
-                <span className="text-white text-lg font-bold flex items-center">Conecta</span>
-              </div>
+        <div className="w-full text-center">
+          <div className="flex items-center justify-center gap-4">
+            <div className="relative flex items-center">
+              <Image
+                src="/logo_branca.svg"
+                alt="EPAMIG"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+                priority
+              />
             </div>
-            <div className="w-10"></div>
-          </>
-        ) : (
-          <div className="w-full text-center">
-            <div className="flex items-center justify-center gap-4">
-              <div className="relative flex items-center">
-                <Image
-                  src="/logo_branca.svg"
-                  alt="EPAMIG"
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto"
-                  priority
-                />
-              </div>
-              <span className="text-white text-2xl font-bold flex items-center">Conecta</span>
-            </div>
+            <span className="text-white text-2xl font-bold flex items-center">Conecta</span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Conteúdo Principal - Layout mais compacto */}
-      <div className={`${isMobile ? 'flex-1 px-4 py-4' : 'flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-6'} mobile-safe-left mobile-safe-right relative z-10`}>
-        <div className={`${isMobile ? 'w-full' : 'w-full max-w-sm'}`}>
+  <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-6 mobile-safe-left mobile-safe-right relative z-10">
+  <div className="w-full max-w-sm">
           {/* Card Principal - Design mais clean */}
           <div className="bg-white rounded-2xl p-6 shadow-xl">
             {/* Ícone Central - Mais simples */}
@@ -163,7 +118,7 @@ export default function LoginPage() {
                       value={chapa}
                       onChange={(e) => setChapa(e.target.value.replace(/\D/g, ""))}
                       placeholder="Digite sua chapa"
-                      className={`${isMobile ? 'mobile-input' : ''} w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 text-gray-800 placeholder-gray-500 font-medium text-base group-hover:border-gray-300`}
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 text-gray-800 placeholder-gray-500 font-medium text-base group-hover:border-gray-300"
                     />
                   </div>
                 </div>
@@ -187,12 +142,12 @@ export default function LoginPage() {
                       value={cpf}
                       onChange={(e) => setCpf(e.target.value.replace(/\D/g, ""))}
                       placeholder="Digite seu CPF"
-                      className={`${isMobile ? 'mobile-input' : ''} w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 text-gray-800 placeholder-gray-500 font-medium text-base group-hover:border-gray-300`}
+                      className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-100 transition-all duration-200 text-gray-800 placeholder-gray-500 font-medium text-base group-hover:border-gray-300"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className={`absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 ${isMobile ? 'mobile-tap-highlight' : ''}`}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -210,7 +165,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`${isMobile ? 'mobile-button' : ''} w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5`}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   {isLoading ? (
                     <>
@@ -243,7 +198,7 @@ export default function LoginPage() {
               <button
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
-                className={`${isMobile ? 'mobile-button' : ''} w-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 text-base shadow-sm hover:shadow-md transform hover:-translate-y-0.5`}
+                className="w-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 text-base shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
               >
                 <Image
                   src="/google-icon.svg"
@@ -267,7 +222,7 @@ export default function LoginPage() {
       </div>
 
       {/* Bottom Safe Area - Só em mobile */}
-      {isMobile && <div className="h-4 bg-green-600 mobile-safe-bottom"></div>}
+
     </div>
   )
 }
