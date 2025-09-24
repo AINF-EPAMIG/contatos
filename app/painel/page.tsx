@@ -1,5 +1,6 @@
 "use client";
-
+import dynamic from "next/dynamic";
+const MenuPrincipal = dynamic(() => import("@/components/MenuPrincipal"), { ssr: false });
 
 import HeaderPainel from "@/components/HeaderPainel";
 import { useSession } from "next-auth/react";
@@ -71,6 +72,7 @@ export default function PainelPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[80px] flex flex-col">
+      <MenuPrincipal />
       <HeaderPainel />
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 flex flex-col items-center">
         <div className="w-full flex flex-col items-center mt-4 mb-8">
