@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     );
     return NextResponse.json({ exists: Array.isArray(rows) && rows.length > 0 });
   } catch (e) {
-    const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : String(e);
+    const msg = typeof e === 'object' && e && 'message' in e ? (e as { message: string }).message : String(e);
     return NextResponse.json({ exists: false, error: msg });
   }
 }

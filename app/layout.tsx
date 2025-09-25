@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="apple-touch-icon" href="/epamig_logo.svg" />
       </head>
         <body className={inter.className}>
-          <script src="/register-sw.js" />
+          <script src="/register-sw.js" async />
           <AuthProvider>{children}</AuthProvider>
         </body>
     </html>

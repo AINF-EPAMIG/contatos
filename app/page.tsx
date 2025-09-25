@@ -1,14 +1,14 @@
 "use client";
 
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
-export default function Home() {
+
+function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
@@ -92,5 +92,13 @@ export default function Home() {
       </div>
     </div>
 
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

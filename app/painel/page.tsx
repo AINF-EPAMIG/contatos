@@ -61,6 +61,72 @@ export default function PainelPage() {
     [key: string]: string;
   };
   const [formData, setFormData] = useState<FormDataType>({ desabafo: "" });
+  const [resultado, setResultado] = useState<{
+    analise: {
+      estresse: number;
+      ansiedade: number;
+      burnout: number;
+      depressao: number;
+      equilibrio: number;
+      apoio: number;
+      alerta: string;
+      dicas: string;
+      justificativa_ia: string;
+    };
+    porcentagens: { [key: string]: number };
+    respostasDetalhadas?: { pergunta: string; resposta: string }[];
+    alerta: string;
+    dicas: string;
+    justificativa: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setLoading(true);
+    try {
+      const dadosParaEnvio = {
+        email,
+        estresse1: formData.estresse1 || "0",
+        estresse2: formData.estresse2 || "0", 
+        ansiedade1: formData.ansiedade1 || "0",
+        ansiedade2: formData.ansiedade2 || "0",
+        burnout1: formData.burnout1 || "0",
+        burnout2: formData.burnout2 || "0",
+        depressao1: formData.depressao1 || "0",
+        depressao2: formData.depressao2 || "0",
+        equilibrio: formData.equilibrio || "0",
+        apoio: formData.apoio || "0",
+        desabafo: formData.desabafo || ""
+      };
+
+      console.log("Dados para envio:", dadosParaEnvio);
+
+      const response = await fetch('/api/salvar-respostas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosParaEnvio)
+      });
+
+      const result = await response.json();
+      console.log("Resultado do servidor:", result);
+      
+      if (result.success) {
+        setResultado(result);
+        setShowForm(false);
+      } else {
+        console.error("Erro do servidor:", result);
+        alert('Erro ao salvar respostas: ' + (result.error || 'Erro desconhecido'));
+      }
+    } catch (error) {
+      console.error("Erro de conexão:", error);
+      alert('Erro ao conectar com o servidor');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!email) return;
@@ -89,13 +155,76 @@ export default function PainelPage() {
               Registrar meu bem-estar hoje
             </button>
           )}
+          {resultado && (
+            <div className="w-full max-w-4xl bg-white rounded-2xl p-8 flex flex-col gap-6 border border-[#b2dfdb]">
+              <h2 className="text-2xl font-bold text-[#025C3E] text-center mb-4">
+                📊 Sua Análise de Bem-Estar
+              </h2>
+              
+              {/* Porcentagens */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {Object.entries(resultado.porcentagens).map(([key, value]) => (
+                  <div key={key} className="bg-gray-50 p-3 rounded-xl text-center">
+                    <p className="text-sm text-gray-600 capitalize">{key}</p>
+                    <p className="text-2xl font-bold text-[#025C3E]">{String(value)}%</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Respostas Detalhadas */}
+              <div className="bg-gray-50 border border-gray-200 p-6 rounded-xl mb-4">
+                <h3 className="font-bold text-gray-800 mb-4">📝 Suas Respostas:</h3>
+                <div className="space-y-4">
+                  {resultado.respostasDetalhadas?.map((item, idx: number) => (
+                    <div key={idx} className="border-l-4 border-[#025C3E] pl-4">
+                      <div className="mb-2 text-sm">
+                        <p className="text-gray-700 mb-1">{item.pergunta}</p>
+                        <p className="font-semibold text-gray-900">
+                          Resposta: {item.resposta}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Alerta */}
+              <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl">
+                <h3 className="font-bold text-orange-800 mb-2">🚨 Alertas:</h3>
+                <p className="text-orange-700">{resultado.alerta}</p>
+              </div>
+
+              {/* Dicas */}
+              <div className="bg-green-50 border border-green-200 p-4 rounded-xl">
+                <h3 className="font-bold text-green-800 mb-2">💡 Dicas Personalizadas:</h3>
+                <p className="text-green-700">{resultado.dicas}</p>
+              </div>
+
+              {/* Justificativa */}
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                <h3 className="font-bold text-blue-800 mb-2">🤖 Como chegamos a essa conclusão:</h3>
+                <p className="text-blue-700">{resultado.justificativa}</p>
+              </div>
+
+              <button
+                onClick={() => {setResultado(null); setRespondeuHoje(true);}}
+                className="mt-4 px-6 py-3 bg-[#025C3E] text-white rounded-xl font-semibold hover:bg-[#038a5e] transition-all"
+              >
+                Finalizar
+              </button>
+            </div>
+          )}
+          
           {showForm && (
             <>
               <div className="w-full max-w-xl flex justify-between text-xs text-gray-500 mb-4">
                 <span>0 = Nunca</span>
                 <span>5 = Sempre</span>
               </div>
-              <form className="w-full max-w-3xl bg-white rounded-2xl p-8 flex flex-col gap-8 border border-[#b2dfdb] transition-all duration-300 overflow-x-hidden">
+              <form 
+                className="w-full max-w-3xl bg-white rounded-2xl p-8 flex flex-col gap-8 border border-[#b2dfdb] transition-all duration-300 overflow-x-hidden"
+                onSubmit={(e) => e.preventDefault()}
+              >
                 {/* Abas do wizard - visual melhorado, bordas mais arredondadas */}
                 <div className="flex gap-1 justify-center w-full mb-8 bg-white rounded-2xl p-1 border border-[#b2dfdb] flex-nowrap">
                   {grupos.map((g, idx) => (
@@ -141,7 +270,7 @@ export default function PainelPage() {
                                   type="radio"
                                   name={p.name}
                                   value={val}
-                                  required={abaAtiva === grupos.findIndex(g => g.perguntas.some(q => q.name === p.name))}
+                                  required={p.name !== 'desabafo'}
                                   className="accent-[#038a5e] w-7 h-7 border border-[#b2dfdb] focus:ring-2 focus:ring-[#038a5e] bg-white"
                                   checked={Number(formData[p.name]) === val}
                                   onChange={e => setFormData(f => ({ ...f, [p.name]: e.target.value }))}
@@ -156,36 +285,64 @@ export default function PainelPage() {
                   </div>
                 </fieldset>
                 {/* Avançar/Voltar ou finalizar */}
-                <div className="flex justify-between mt-8">
+                <div className="flex justify-between mt-8 gap-2">
                   <button
                     type="button"
-                    className="px-7 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all flex items-center gap-2 text-base"
-                    onClick={() => setAbaAtiva(a => Math.max(0, a - 1))}
+                    className="px-4 py-2 rounded-full bg-red-600 text-white font-bold hover:bg-red-700 transition-all flex flex-col items-center justify-center text-sm min-w-[90px] shadow-sm disabled:opacity-50"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setAbaAtiva(a => Math.max(0, a - 1));
+                    }}
                     disabled={abaAtiva === 0}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                    Voltar
+                    <span className="flex flex-col items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mb-1">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                      </svg>
+                      Voltar
+                    </span>
                   </button>
                   {abaAtiva < grupos.length - 1 ? (
                     <button
                       type="button"
-                      className="px-7 py-3 rounded-xl bg-[#025C3E] text-white font-bold hover:bg-[#038a5e] transition-all text-base flex items-center gap-2"
-                      onClick={() => setAbaAtiva(a => Math.min(grupos.length - 1, a + 1))}
-                      disabled={grupos[abaAtiva].perguntas.some(p => p.name !== 'desabafo' && formData[p.name] === undefined)}
+                      className="px-4 py-2 rounded-full bg-[#025C3E] text-white font-bold hover:bg-[#038a5e] transition-all text-sm flex flex-col items-center justify-center min-w-[90px] shadow-sm disabled:opacity-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setAbaAtiva(a => Math.min(grupos.length - 1, a + 1));
+                      }}
+                      disabled={grupos[abaAtiva].perguntas.some(p => p.name !== 'desabafo' && (!formData[p.name] || formData[p.name] === ""))}
                     >
-                      Avançar
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
+                      <span className="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mb-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                        Avançar
+                      </span>
                     </button>
                   ) : (
                     <button
-                      type="submit"
-                      className="px-10 py-3 rounded-xl bg-[#025C3E] text-white font-extrabold hover:bg-[#038a5e] transition-all text-lg tracking-wide border-2 border-[#b2dfdb]"
+                      type="button"
+                      className="px-4 py-2 rounded-full bg-[#025C3E] text-white font-extrabold hover:bg-[#038a5e] transition-all text-sm tracking-wide border-2 border-[#b2dfdb] flex flex-col items-center justify-center min-w-[90px] shadow-sm disabled:opacity-50"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSubmit(e);
+                      }}
+                      disabled={loading}
                     >
-                      Enviar respostas
+                      <span className="flex flex-col items-center justify-center">
+                        {loading ? (
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1"></div>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mb-1">
+                            <circle cx="12" cy="12" r="10" stroke="#b2dfdb" strokeWidth="2" fill="none" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h8" stroke="#fff" strokeWidth="2" />
+                          </svg>
+                        )}
+                        {loading ? "Analisando..." : "Enviar respostas"}
+                      </span>
                     </button>
                   )}
                 </div>

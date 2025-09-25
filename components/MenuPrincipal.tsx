@@ -2,7 +2,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HomeIcon, ChartBarIcon, ArrowTrendingDownIcon, BoltIcon, Bars3BottomLeftIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, ChartBarIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 const menuComum = [
   { label: 'Painel', icon: <HomeIcon className="w-5 h-5" />, href: '/painel' },
@@ -10,11 +10,8 @@ const menuComum = [
 ];
 
 const menuEspecial = [
-  { label: 'Geral', icon: <HomeIcon className="w-5 h-5" />, href: '/' },
-  { label: 'Receitas', icon: <ChartBarIcon className="w-5 h-5" />, href: '/receitas' },
-  { label: 'Despesas', icon: <ArrowTrendingDownIcon className="w-5 h-5" />, href: '/despesas' },
-  { label: 'Metafísicas', icon: <BoltIcon className="w-5 h-5" />, href: '/metafisicas' },
-  { label: 'Planilha', icon: <Bars3BottomLeftIcon className="w-5 h-5" />, href: '/planilha' },
+  { label: 'Início', icon: <HomeIcon className="w-5 h-5" />, href: '/' },
+  { label: 'Histórico', icon: <ChartBarIcon className="w-5 h-5" />, href: '/historico-geral' },
 ];
 
 export default function MenuPrincipal() {

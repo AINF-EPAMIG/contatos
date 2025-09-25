@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Badge, IdCard, Eye, EyeOff, ArrowLeft, Wifi, Shield, Zap } from 'lucide-react'
+import { Badge, IdCard, Eye, EyeOff, Wifi, Shield, Zap } from 'lucide-react'
 
 
 export default function LoginPage() {
