@@ -41,8 +41,8 @@ export default function HistoricoGeralPage() {
 
   useEffect(() => {
     console.log('🚀 HistoricoGeral: useEffect executado, iniciando fetchAnalises');
-    console.log('🔍 Estado inicial - loading:', loading, 'error:', error, 'analises:', analises.length);
     fetchAnalises();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

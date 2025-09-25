@@ -34,7 +34,7 @@ export async function GET() {
 
     // Primeiro verificar se a conexão funciona
     try {
-      const [testConnection] = await saudeMentalDB.execute('SELECT 1 as test');
+      await saudeMentalDB.execute('SELECT 1 as test');
       console.log('✅ Conexão com banco OK');
     } catch (connError) {
       console.error('❌ Erro de conexão:', connError);

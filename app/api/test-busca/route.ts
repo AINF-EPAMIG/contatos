@@ -6,12 +6,12 @@ export async function GET() {
     console.log('🧪 === TESTE SIMPLIFICADO DE BUSCA ===');
     
     // 1. Testar conexão básica
-    const [testConn] = await saudeMentalDB.execute('SELECT 1 as test');
+    await saudeMentalDB.execute('SELECT 1 as test');
     console.log('✅ Conexão OK');
     
     // 2. Contar análises
     const [countResult] = await saudeMentalDB.execute('SELECT COUNT(*) as total FROM analises');
-    const total = (countResult as any)[0].total;
+    const total = (countResult as { total: number }[])[0].total;
     console.log('📊 Total de análises na tabela:', total);
     
     // 3. Buscar apenas IDs e data_analise para teste

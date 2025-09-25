@@ -227,7 +227,7 @@ export async function POST(request: Request) {
         ]
       );
       
-      console.log("✅ Análise salva com sucesso! Insert ID:", (insertResult as any).insertId);
+      console.log("✅ Análise salva com sucesso! Insert ID:", (insertResult as { insertId: number }).insertId);
     } catch (dbError) {
       console.error("❌ ERRO CRÍTICO ao salvar análise:", dbError);
       console.error("Stack trace:", dbError);
