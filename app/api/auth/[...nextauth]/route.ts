@@ -47,7 +47,7 @@ const handler = NextAuth({
         try {
           // Verifica se existe colaborador ativo
           const [rows] = await db.execute(
-            "SELECT * FROM colaboradores WHERE email = ? AND status_colaborador = 1 LIMIT 1",
+            "SELECT * FROM colaboradores WHERE email = ? AND status = 1 LIMIT 1",
             [token.email]
           ) as [mysql.RowDataPacket[], mysql.FieldPacket[]];
           const userDb = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
