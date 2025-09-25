@@ -8,6 +8,17 @@ export async function POST(request: Request) {
     const { pools } = await getConexoes();
     
     // 1. Primeiro salvar na tabela respostas
+    console.log("=== SALVANDO RESPOSTA ===");
+    console.log("Dados da resposta:", {
+      email: data.email,
+      estresse1: data.estresse1, estresse2: data.estresse2,
+      ansiedade1: data.ansiedade1, ansiedade2: data.ansiedade2,
+      burnout1: data.burnout1, burnout2: data.burnout2,
+      depressao1: data.depressao1, depressao2: data.depressao2,
+      equilibrio: data.equilibrio, apoio: data.apoio,
+      desabafo: data.desabafo || ""
+    });
+    
     const [resultRespostas] = await pools.saude_mental.query(
       `INSERT INTO respostas (email, data_resposta, estresse1, estresse2, 
        ansiedade1, ansiedade2, burnout1, burnout2, depressao1, depressao2, 
@@ -25,7 +36,7 @@ export async function POST(request: Request) {
     );
     
     const respostaId = (resultRespostas as { insertId: number }).insertId;
-    console.log("Resposta salva com ID:", respostaId);
+    console.log("✅ Resposta salva com ID:", respostaId);
     
     // 2. Calcular médias e porcentagens
     const medias = {
@@ -190,6 +201,20 @@ export async function POST(request: Request) {
     });
     
     try {
+      console.log("=== TENTANDO SALVAR ANÁLISE ===");
+      console.log("Dados para inserção:", {
+        respostaId,
+        estresse: porcentagens.estresse,
+        ansiedade: porcentagens.ansiedade,
+        burnout: porcentagens.burnout,
+        depressao: porcentagens.depressao,
+        equilibrio: porcentagens.equilibrio,
+        apoio: porcentagens.apoio,
+        alerta: alerta.join("; "),
+        dicas: dicas.join("; "),
+        justificativa: justificativa.join("; ")
+      });
+      
       const [insertResult] = await pools.saude_mental.query(
         `INSERT INTO analises (resposta_id, estresse, ansiedade, burnout, depressao, 
          equilibrio, apoio, alerta, dicas, justificativa_ia, data_analise) 
@@ -202,9 +227,10 @@ export async function POST(request: Request) {
         ]
       );
       
-      console.log("Análise salva com sucesso:", insertResult);
+      console.log("✅ Análise salva com sucesso! Insert ID:", (insertResult as any).insertId);
     } catch (dbError) {
-      console.error("Erro ao salvar no banco:", dbError);
+      console.error("❌ ERRO CRÍTICO ao salvar análise:", dbError);
+      console.error("Stack trace:", dbError);
       throw dbError;
     }
     
@@ -237,7 +263,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      analiseId: respostaId,
+      analise: {
+        estresse: porcentagens.estresse,
+        ansiedade: porcentagens.ansiedade,
+        burnout: porcentagens.burnout,
+        depressao: porcentagens.depressao,
+        equilibrio: porcentagens.equilibrio,
+        apoio: porcentagens.apoio,
+        alerta: alerta.join("; "),
+        dicas: dicas.join("; "),
+        justificativa_ia: justificativa.join("; ")
+      },
       porcentagens,
       alerta: alerta.join("; "),
       dicas: dicas.join("; "),
@@ -246,9 +282,15 @@ export async function POST(request: Request) {
     });
     
   } catch (error) {
-    console.error("Erro ao salvar respostas:", error);
+    console.error("❌ ERRO CRÍTICO ao salvar respostas:", error);
+    console.error("Stack completo:", error);
     return NextResponse.json(
-      { error: "Erro interno do servidor", details: error },
+      { 
+        success: false,
+        error: "Erro interno do servidor", 
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

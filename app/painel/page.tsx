@@ -114,7 +114,14 @@ export default function PainelPage() {
       console.log("Resultado do servidor:", result);
       
       if (result.success) {
-        setResultado(result);
+        setResultado({
+          analise: result.analise,
+          porcentagens: result.porcentagens,
+          respostasDetalhadas: result.respostasDetalhadas,
+          alerta: result.alerta,
+          dicas: result.dicas,
+          justificativa: result.justificativa
+        });
         setShowForm(false);
       } else {
         console.error("Erro do servidor:", result);

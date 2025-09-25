@@ -32,6 +32,15 @@ export async function GET() {
   try {
     console.log('=== Iniciando busca de análises ===');
 
+    // Primeiro verificar se a conexão funciona
+    try {
+      const [testConnection] = await saudeMentalDB.execute('SELECT 1 as test');
+      console.log('✅ Conexão com banco OK');
+    } catch (connError) {
+      console.error('❌ Erro de conexão:', connError);
+      throw connError;
+    }
+
     // Buscar todas as análises ordenadas por data decrescente
     const [analises] = await saudeMentalDB.execute<AnaliseRow[]>(
       `SELECT id, resposta_id, estresse, ansiedade, burnout, depressao, equilibrio, apoio, 
@@ -40,7 +49,10 @@ export async function GET() {
        ORDER BY data_analise DESC`
     );
 
-    console.log(`Encontradas ${analises.length} análises`);
+    console.log(`✅ Encontradas ${analises.length} análises na tabela`);
+    if (analises.length > 0) {
+      console.log('📋 Primeira análise:', analises[0]);
+    }
 
     const analisesCompletas = [];
 

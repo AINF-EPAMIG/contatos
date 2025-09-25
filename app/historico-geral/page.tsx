@@ -50,15 +50,22 @@ export default function HistoricoGeralPage() {
   const fetchAnalises = async () => {
     try {
       const response = await fetch('/api/historico-analises');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
-        setAnalises(data.analises);
-        setAnalisesFiltered(data.analises);
+        setAnalises(data.analises || []);
+        setAnalisesFiltered(data.analises || []);
+        setError("");
       } else {
         setError(data.error || 'Erro ao carregar histórico');
       }
-    } catch {
+    } catch (err) {
+      console.error('Erro ao carregar análises:', err);
       setError('Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
@@ -66,16 +73,22 @@ export default function HistoricoGeralPage() {
   };
 
   const aplicarFiltros = () => {
+    if (analises.length === 0) {
+      console.log('Nenhuma análise disponível para filtrar');
+      setAnalisesFiltered([]);
+      return;
+    }
+
     let filtered = [...analises];
 
     // Debug: verificar dados
-    console.log('Dados para filtrar:', analises);
+    console.log('Dados para filtrar:', analises.length, 'análises');
 
     // Filtro por colaborador
     if (filtroColaborador) {
       filtered = filtered.filter(analise => 
-        analise.nome.toLowerCase().includes(filtroColaborador.toLowerCase()) ||
-        analise.email.toLowerCase().includes(filtroColaborador.toLowerCase())
+        analise.nome?.toLowerCase().includes(filtroColaborador.toLowerCase()) ||
+        analise.email?.toLowerCase().includes(filtroColaborador.toLowerCase())
       );
     }
 
@@ -88,7 +101,7 @@ export default function HistoricoGeralPage() {
       analise.equilibrio >= filtroEquilibrio.min && analise.equilibrio <= filtroEquilibrio.max
     );
 
-    console.log('Dados filtrados:', filtered);
+    console.log('Dados filtrados:', filtered.length, 'de', analises.length);
     setAnalisesFiltered(filtered);
   };
 
