@@ -29,6 +29,7 @@ export default function HistoricoGeralPage() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAnalise, setSelectedAnalise] = useState<AnaliseCompleta | null>(null);
+  const [autoReload, setAutoReload] = useState(false);
   
   // Estados dos filtros
   const [filtroColaborador, setFiltroColaborador] = useState("");
@@ -39,6 +40,8 @@ export default function HistoricoGeralPage() {
   const [filtroEquilibrio, setFiltroEquilibrio] = useState({ min: 0, max: 100 });
 
   useEffect(() => {
+    console.log('🚀 HistoricoGeral: useEffect executado, iniciando fetchAnalises');
+    console.log('🔍 Estado inicial - loading:', loading, 'error:', error, 'analises:', analises.length);
     fetchAnalises();
   }, []);
 
@@ -47,28 +50,68 @@ export default function HistoricoGeralPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
 
+  // Auto-reload a cada 30 segundos se ativado
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (autoReload) {
+      interval = setInterval(() => {
+        console.log('🔄 Auto-reload executando...');
+        fetchAnalises();
+      }, 30000); // 30 segundos
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [autoReload]);
+
   const fetchAnalises = async () => {
+    console.log('📡 Iniciando fetchAnalises...');
+    setLoading(true);
+    setError("");
+    
     try {
-      const response = await fetch('/api/historico-analises');
+      console.log('🔗 Fazendo requisição para /api/historico-analises');
+      const response = await fetch('/api/historico-analises', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store' // Força buscar dados atuais
+      });
+      
+      console.log('📨 Response status:', response.status);
+      console.log('📨 Response ok:', response.ok);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('📋 Dados recebidos:', data);
       
       if (data.success) {
+        console.log('✅ Sucesso! Análises recebidas:', data.analises?.length || 0);
         setAnalises(data.analises || []);
         setAnalisesFiltered(data.analises || []);
         setError("");
+        
+        if (data.analises?.length === 0) {
+          console.log('⚠️ Nenhuma análise encontrada no banco');
+        }
       } else {
+        console.log('❌ API retornou erro:', data.error);
         setError(data.error || 'Erro ao carregar histórico');
       }
     } catch (err) {
-      console.error('Erro ao carregar análises:', err);
-      setError('Erro ao conectar com o servidor');
+      console.error('❌ Erro ao carregar análises:', err);
+      setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
+      console.log('🔚 fetchAnalises finalizado');
     }
   };
 
@@ -186,8 +229,40 @@ export default function HistoricoGeralPage() {
           <div className="bg-white rounded-t-2xl shadow-lg flex-1 flex flex-col overflow-hidden min-h-0">
             {/* Header */}
             <div className="bg-[#025C3E] text-white p-3 sm:p-4 flex-shrink-0">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">📊 Histórico Geral de Análises</h1>
-              <p className="text-green-100 mt-1 text-xs sm:text-sm truncate">Acompanhamento do bem-estar de todos os colaboradores</p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">📊 Histórico Geral de Análises</h1>
+                  <p className="text-green-100 mt-1 text-xs sm:text-sm truncate">Acompanhamento do bem-estar de todos os colaboradores</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setAutoReload(!autoReload)}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      autoReload 
+                        ? 'bg-yellow-600 hover:bg-yellow-700' 
+                        : 'bg-gray-600 hover:bg-gray-700'
+                    }`}
+                  >
+                    {autoReload ? '⏸️ Auto' : '▶️ Auto'}
+                  </button>
+                  <button
+                    onClick={fetchAnalises}
+                    disabled={loading}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Carregando...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Atualizar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Filtros */}
@@ -242,7 +317,11 @@ export default function HistoricoGeralPage() {
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 gap-2">
                 <p className="text-xs sm:text-sm text-gray-600 truncate">
+                                  <p className="text-xs text-gray-600 truncate">
                   {analisesFiltered.length} de {analises.length} análises
+                  {loading && <span className="text-orange-600 ml-2">(Carregando...)</span>}
+                  {error && <span className="text-red-600 ml-2">(Erro!)</span>}
+                </p>
                 </p>
                 <button
                   onClick={limparFiltros}
@@ -477,13 +556,44 @@ export default function HistoricoGeralPage() {
             )}
             
             {/* Empty State - Sem dados */}
-            {analises.length === 0 && (
+            {analises.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">📊</div>
                 <p className="text-gray-600 text-lg">Nenhuma análise encontrada</p>
                 <p className="text-gray-500 text-sm mt-2">
                   As análises aparecerão aqui conforme os colaboradores respondem aos questionários
                 </p>
+                <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left text-xs">
+                  <p><strong>Debug Info:</strong></p>
+                  <p>• Loading: {loading.toString()}</p>
+                  <p>• Error: {error || 'nenhum'}</p>
+                  <p>• Total análises: {analises.length}</p>
+                  <p>• Análises filtradas: {analisesFiltered.length}</p>
+                  <div className="space-x-2 mt-2">
+                    <button 
+                      onClick={() => console.log('Estados atuais:', { loading, error, analises, analisesFiltered })}
+                      className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                    >
+                      Log Estados
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/test-busca');
+                          const result = await response.json();
+                          console.log('Teste de busca:', result);
+                          alert('Teste concluído - veja o console');
+                        } catch (err) {
+                          console.error('Erro no teste:', err);
+                          alert('Erro no teste - veja o console');
+                        }
+                      }}
+                      className="px-2 py-1 bg-green-500 text-white rounded text-xs"
+                    >
+                      Testar API
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
