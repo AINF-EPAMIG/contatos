@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { saudeMentalDB, funcionariosDB } from '@/lib/db';
 import { RowDataPacket } from 'mysql2/promise';
+import { getServerSession, isAuthenticated } from '@/lib/auth';
 
 interface AnaliseRow extends RowDataPacket {
   id: number;
@@ -28,9 +29,24 @@ interface ColaboradorRow extends RowDataPacket {
   cargo: string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     console.log('=== DIAGNÓSTICO COMPLETO - HISTÓRICO ANÁLISES ===');
+    
+    // Verificar autenticação
+    const authenticated = await isAuthenticated(req);
+    if (!authenticated) {
+      console.log('❌ Acesso não autorizado');
+      return new NextResponse(JSON.stringify({ error: 'Não autorizado' }), { 
+        status: 401,
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+    
+    // Obter sessão do usuário para log
+    const session = await getServerSession(req);
+    console.log('👤 Usuário autenticado:', session?.email);
+    
     console.log('🔧 Configurações do banco:');
     console.log('- Host:', process.env.DB_HOST);
     console.log('- User:', process.env.DB_USER);
