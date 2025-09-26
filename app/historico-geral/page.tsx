@@ -40,6 +40,17 @@ export default function HistoricoGeralPage() {
 
   useEffect(() => {
     fetchAnalises();
+    
+    // Buscar dados quando a página ganha foco (usuário volta para a aba)
+    const handleFocus = () => {
+      fetchAnalises();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   useEffect(() => {
@@ -51,11 +62,13 @@ export default function HistoricoGeralPage() {
     setError("");
     
     try {
-      const response = await fetch('/api/historico-analises', {
+      // Adiciona timestamp para evitar qualquer cache
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/historico-analises?t=${timestamp}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
           'Pragma': 'no-cache',
           'Expires': '0'
         },

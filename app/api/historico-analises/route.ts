@@ -30,11 +30,28 @@ interface ColaboradorRow extends RowDataPacket {
 
 export async function GET() {
   try {
+    console.log('=== DIAGNÓSTICO COMPLETO - HISTÓRICO ANÁLISES ===');
+    console.log('🔧 Configurações do banco:');
+    console.log('- Host:', process.env.DB_HOST);
+    console.log('- User:', process.env.DB_USER);
+    console.log('- Database:', process.env.DB_DATABASE);
 
+    // Primeiro verificar se a conexão funciona
+    try {
+      await saudeMentalDB.execute('SELECT 1 as test');
+      console.log('✅ Conexão com banco OK');
+    } catch (connError) {
+      console.error('❌ Erro de conexão:', connError);
+      throw connError;
+    }
 
-
-
-
+    // Verificar se a tabela existe
+    try {
+      const [tables] = await saudeMentalDB.execute('SHOW TABLES LIKE "analises"');
+      console.log('🏗️ Tabela analises existe:', (tables as RowDataPacket[]).length > 0);
+    } catch (tableError) {
+      console.error('❌ Erro ao verificar tabela:', tableError);
+    }
 
     // Contar total de registros
     try {
@@ -149,6 +166,7 @@ export async function GET() {
       }
     }
 
+    // Retorna array direto SEM CACHE
     return new Response(JSON.stringify(analisesCompletas), {
       status: 200,
       headers: {
