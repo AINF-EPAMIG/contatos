@@ -40,15 +40,20 @@ export default function HistoricoGeralPage() {
 
   useEffect(() => {
     fetchAnalises();
-    
+
+    // Atualização automática a cada 10 segundos
+    const intervalId = setInterval(() => {
+      fetchAnalises();
+    }, 1000);
+
     // Buscar dados quando a página ganha foco (usuário volta para a aba)
     const handleFocus = () => {
       fetchAnalises();
     };
-    
     window.addEventListener('focus', handleFocus);
-    
+
     return () => {
+      clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
@@ -203,12 +208,6 @@ export default function HistoricoGeralPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">📊 Histórico Geral de Análises</h1>
-                  <p className="text-green-100 mt-1 text-xs sm:text-sm truncate">
-                    Acompanhamento do bem-estar • Sincronização automática a cada 10s
-                    {!loading && (
-                      <span className="ml-2 inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    )}
-                  </p>
                 </div>
                 {loading && (
                   <div className="flex items-center gap-2">
