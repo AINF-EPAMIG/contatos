@@ -48,7 +48,7 @@ export async function GET() {
     // Verificar se a tabela existe
     try {
       const [tables] = await saudeMentalDB.execute('SHOW TABLES LIKE "analises"');
-      console.log('🏗️ Tabela analises existe:', (tables as any[]).length > 0);
+      console.log('🏗️ Tabela analises existe:', (tables as RowDataPacket[]).length > 0);
     } catch (tableError) {
       console.error('❌ Erro ao verificar tabela:', tableError);
     }
@@ -56,7 +56,7 @@ export async function GET() {
     // Contar total de registros
     try {
       const [count] = await saudeMentalDB.execute('SELECT COUNT(*) as total FROM analises');
-      console.log('📊 Total de análises na tabela:', (count as any)[0].total);
+      console.log('📊 Total de análises na tabela:', (count as RowDataPacket[])[0].total);
     } catch (countError) {
       console.error('❌ Erro ao contar registros:', countError);
     }
@@ -80,7 +80,7 @@ export async function GET() {
       console.log('⚠️ NENHUMA ANÁLISE ENCONTRADA - Verificando respostas...');
       try {
         const [respostas] = await saudeMentalDB.execute('SELECT COUNT(*) as total FROM respostas');
-        console.log('📊 Total de respostas na tabela:', (respostas as any)[0].total);
+        console.log('📊 Total de respostas na tabela:', (respostas as RowDataPacket[])[0].total);
       } catch (err) {
         console.error('❌ Erro ao verificar respostas:', err);
       }

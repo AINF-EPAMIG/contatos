@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getConexoes } from "@/lib/db";
+import { ResultSetHeader, RowDataPacket } from "mysql2";
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     let analiseId: number;
     console.log("✅ Resposta salva com sucesso!");
     console.log("📊 ID inserido:", respostaId);
-    console.log("🔢 Linhas afetadas:", (resultRespostas as any).affectedRows);
+    console.log("🔢 Linhas afetadas:", (resultRespostas as ResultSetHeader).affectedRows);
     
     // 2. Calcular médias e porcentagens
     const medias = {
@@ -267,8 +268,8 @@ export async function POST(request: Request) {
       );
       
       console.log('🔍 Verificação final:');
-      console.log('- Total de respostas para', data.email, ':', (countResult as any[])[0].total);
-      console.log('- Total de análises para resposta', respostaId, ':', (countAnalises as any[])[0].total);
+      console.log('- Total de respostas para', data.email, ':', (countResult as RowDataPacket[])[0].total);
+      console.log('- Total de análises para resposta', respostaId, ':', (countAnalises as RowDataPacket[])[0].total);
     } catch (dbError) {
       console.error("❌ ERRO CRÍTICO ao salvar análise:", dbError);
       console.error("Stack trace:", dbError);
