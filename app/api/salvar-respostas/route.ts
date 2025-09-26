@@ -8,8 +8,12 @@ export async function POST(request: Request) {
     const { pools } = await getConexoes();
     
     // 1. Primeiro salvar na tabela respostas
-    console.log("=== SALVANDO RESPOSTA ===");
-    console.log("Dados da resposta:", {
+    console.log("=== DIAGNÓSTICO SALVAMENTO ===");
+    console.log('🔧 Configurações do banco:');
+    console.log('- Host:', process.env.DB_HOST);
+    console.log('- User:', process.env.DB_USER);
+    console.log('- Database:', process.env.DB_DATABASE);
+    console.log("📋 Dados da resposta recebidos:", {
       email: data.email,
       estresse1: data.estresse1, estresse2: data.estresse2,
       ansiedade1: data.ansiedade1, ansiedade2: data.ansiedade2,
@@ -19,6 +23,7 @@ export async function POST(request: Request) {
       desabafo: data.desabafo || ""
     });
     
+    console.log('💽 Tentando inserir na tabela respostas...');
     const [resultRespostas] = await pools.saude_mental.query(
       `INSERT INTO respostas (email, data_resposta, estresse1, estresse2, 
        ansiedade1, ansiedade2, burnout1, burnout2, depressao1, depressao2, 
@@ -36,7 +41,10 @@ export async function POST(request: Request) {
     );
     
     const respostaId = (resultRespostas as { insertId: number }).insertId;
-    console.log("✅ Resposta salva com ID:", respostaId);
+    let analiseId: number;
+    console.log("✅ Resposta salva com sucesso!");
+    console.log("📊 ID inserido:", respostaId);
+    console.log("🔢 Linhas afetadas:", (resultRespostas as any).affectedRows);
     
     // 2. Calcular médias e porcentagens
     const medias = {
@@ -58,6 +66,9 @@ export async function POST(request: Request) {
     };
     
     // 3. Análise psicológica robusta e dinâmica
+    console.log('🧠 Iniciando análise psicológica...');
+    console.log('📈 Porcentagens calculadas:', porcentagens);
+    
     const alerta = [];
     const dicas = [];
     const justificativa = [];
@@ -215,6 +226,20 @@ export async function POST(request: Request) {
         justificativa: justificativa.join("; ")
       });
       
+      console.log('💾 Salvando análise IA na tabela analises...');
+      console.log('🆔 Resposta ID:', respostaId);
+      console.log('📈 Dados da análise:', {
+        estresse: porcentagens.estresse,
+        ansiedade: porcentagens.ansiedade,
+        burnout: porcentagens.burnout,
+        depressao: porcentagens.depressao,
+        equilibrio: porcentagens.equilibrio,
+        apoio: porcentagens.apoio,
+        alertas_count: alerta.length,
+        dicas_count: dicas.length,
+        justificativa_count: justificativa.length
+      });
+      
       const [insertResult] = await pools.saude_mental.query(
         `INSERT INTO analises (resposta_id, estresse, ansiedade, burnout, depressao, 
          equilibrio, apoio, alerta, dicas, justificativa_ia, data_analise) 
@@ -227,7 +252,23 @@ export async function POST(request: Request) {
         ]
       );
       
-      console.log("✅ Análise salva com sucesso! Insert ID:", (insertResult as { insertId: number }).insertId);
+      analiseId = (insertResult as { insertId: number }).insertId;
+      console.log("✅ Análise salva com sucesso! Insert ID:", analiseId);
+      
+      // Verificação final - contar registros na base
+      const [countResult] = await pools.saude_mental.query(
+        'SELECT COUNT(*) as total FROM respostas WHERE email = ?',
+        [data.email]
+      );
+      
+      const [countAnalises] = await pools.saude_mental.query(
+        'SELECT COUNT(*) as total FROM analises WHERE resposta_id = ?',
+        [respostaId]
+      );
+      
+      console.log('🔍 Verificação final:');
+      console.log('- Total de respostas para', data.email, ':', (countResult as any[])[0].total);
+      console.log('- Total de análises para resposta', respostaId, ':', (countAnalises as any[])[0].total);
     } catch (dbError) {
       console.error("❌ ERRO CRÍTICO ao salvar análise:", dbError);
       console.error("Stack trace:", dbError);
@@ -261,8 +302,15 @@ export async function POST(request: Request) {
       ]}
     ];
 
+    console.log('🎯 Retornando resposta completa da API');
+    
     return NextResponse.json({
       success: true,
+      message: "Dados salvos com sucesso no servidor",
+      ids: {
+        resposta: respostaId,
+        analise: analiseId
+      },
       analise: {
         estresse: porcentagens.estresse,
         ansiedade: porcentagens.ansiedade,
@@ -278,7 +326,13 @@ export async function POST(request: Request) {
       alerta: alerta.join("; "),
       dicas: dicas.join("; "),
       justificativa: justificativa.join("; "),
-      respostasDetalhadas
+      respostasDetalhadas,
+      diagnostico: {
+        email: data.email,
+        timestamp: new Date().toISOString(),
+        servidor: "produção",
+        database: process.env.DB_DATABASE
+      }
     });
     
   } catch (error) {

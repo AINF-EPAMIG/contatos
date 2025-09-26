@@ -30,7 +30,11 @@ interface ColaboradorRow extends RowDataPacket {
 
 export async function GET() {
   try {
-    console.log('=== Iniciando busca de análises ===');
+    console.log('=== DIAGNÓSTICO COMPLETO - HISTÓRICO ANÁLISES ===');
+    console.log('🔧 Configurações do banco:');
+    console.log('- Host:', process.env.DB_HOST);
+    console.log('- User:', process.env.DB_USER);
+    console.log('- Database:', process.env.DB_DATABASE);
 
     // Primeiro verificar se a conexão funciona
     try {
@@ -41,6 +45,22 @@ export async function GET() {
       throw connError;
     }
 
+    // Verificar se a tabela existe
+    try {
+      const [tables] = await saudeMentalDB.execute('SHOW TABLES LIKE "analises"');
+      console.log('🏗️ Tabela analises existe:', (tables as any[]).length > 0);
+    } catch (tableError) {
+      console.error('❌ Erro ao verificar tabela:', tableError);
+    }
+
+    // Contar total de registros
+    try {
+      const [count] = await saudeMentalDB.execute('SELECT COUNT(*) as total FROM analises');
+      console.log('📊 Total de análises na tabela:', (count as any)[0].total);
+    } catch (countError) {
+      console.error('❌ Erro ao contar registros:', countError);
+    }
+
     // Buscar todas as análises ordenadas por data decrescente
     const [analises] = await saudeMentalDB.execute<AnaliseRow[]>(
       `SELECT id, resposta_id, estresse, ansiedade, burnout, depressao, equilibrio, apoio, 
@@ -49,9 +69,21 @@ export async function GET() {
        ORDER BY data_analise DESC`
     );
 
-    console.log(`✅ Encontradas ${analises.length} análises na tabela`);
+    console.log(`✅ Query executada - Encontradas ${analises.length} análises`);
     if (analises.length > 0) {
-      console.log('📋 Primeira análise:', analises[0]);
+      console.log('📋 Primeira análise encontrada:', {
+        id: analises[0].id,
+        resposta_id: analises[0].resposta_id,
+        data_analise: analises[0].data_analise
+      });
+    } else {
+      console.log('⚠️ NENHUMA ANÁLISE ENCONTRADA - Verificando respostas...');
+      try {
+        const [respostas] = await saudeMentalDB.execute('SELECT COUNT(*) as total FROM respostas');
+        console.log('📊 Total de respostas na tabela:', (respostas as any)[0].total);
+      } catch (err) {
+        console.error('❌ Erro ao verificar respostas:', err);
+      }
     }
 
     const analisesCompletas = [];
