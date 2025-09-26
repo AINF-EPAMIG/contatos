@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import HeaderPainel from "@/components/HeaderPainel";
@@ -42,40 +42,13 @@ export default function HistoricoGeralPage() {
   const [filtroDepressao, setFiltroDepressao] = useState({ min: 0, max: 100 });
   const [filtroEquilibrio, setFiltroEquilibrio] = useState({ min: 0, max: 100 });
 
-  // Verificar autenticação
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login");
-    }
-  }, [status, router]);
-
-  // Buscar dados somente quando estiver autenticado
-  useEffect(() => {
-    if (status === "authenticated") {
-      fetchAnalises();
-
-      // Buscar dados quando a página ganha foco (usuário volta para a aba)
-      const handleFocus = () => {
-        fetchAnalises();
-      };
-      window.addEventListener('focus', handleFocus);
-
-      return () => {
-        window.removeEventListener('focus', handleFocus);
-      };
-    }
-  }, [status]);
-
-  useEffect(() => {
-    aplicarFiltros();
-  }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
-
-  const fetchAnalises = async () => {
+  // Função para buscar análises do servidor
+  const fetchAnalises = useCallback(async () => {
     // Se não estiver autenticado, não faz a requisição
     if (status !== "authenticated") {
       return;
     }
-
+  
     setLoading(true);
     setError("");
     
@@ -122,9 +95,10 @@ export default function HistoricoGeralPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status, session, router]);
 
-  const aplicarFiltros = () => {
+  // Função para aplicar filtros
+  const aplicarFiltros = useCallback(() => {
     if (analises.length === 0) {
       setAnalisesFiltered([]);
       return;
@@ -150,7 +124,36 @@ export default function HistoricoGeralPage() {
     );
 
     setAnalisesFiltered(filtered);
-  };
+  }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
+
+  // Verificar autenticação
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  // Buscar dados somente quando estiver autenticado
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchAnalises();
+
+      // Buscar dados quando a página ganha foco (usuário volta para a aba)
+      const handleFocus = () => {
+        fetchAnalises();
+      };
+      window.addEventListener('focus', handleFocus);
+
+      return () => {
+        window.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [status, fetchAnalises]);
+
+  // Aplicar filtros quando os dados ou critérios de filtro mudarem
+  useEffect(() => {
+    aplicarFiltros();
+  }, [aplicarFiltros]);
 
   const limparFiltros = () => {
     setFiltroColaborador("");
@@ -190,6 +193,30 @@ export default function HistoricoGeralPage() {
 
   // Mostrar carregamento de autenticação
   if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[80px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#025C3E] mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar carregamento de dados
+  if (loading && status === "authenticated") {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-[80px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#025C3E] mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando histórico geral...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar carregamento de autenticação
+  if (status !== "authenticated" && status !== "unauthenticated") {
     return (
       <div className="min-h-screen bg-gray-50 pt-[80px] flex items-center justify-center">
         <div className="text-center">
