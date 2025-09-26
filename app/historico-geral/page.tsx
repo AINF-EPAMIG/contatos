@@ -39,29 +39,14 @@ export default function HistoricoGeralPage() {
   const [filtroEquilibrio, setFiltroEquilibrio] = useState({ min: 0, max: 100 });
 
   useEffect(() => {
-    console.log('🚀 HistoricoGeral: Carregando dados iniciais...');
-    fetchAnalises(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchAnalises();
   }, []);
 
   useEffect(() => {
     aplicarFiltros();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
 
-  // Auto-reload a cada 10 segundos para dados em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchAnalises(true); // silent = true para atualizações automáticas
-    }, 10000); // 10 segundos
-    
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  const fetchAnalises = async (silent = false) => {
-    if (!silent) console.log('📡 Carregando dados do histórico...');
+  const fetchAnalises = async () => {
     setLoading(true);
     setError("");
     
@@ -70,8 +55,11 @@ export default function HistoricoGeralPage() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
-        cache: 'no-store' // Força buscar dados atuais
+        cache: 'no-store'
       });
       
       if (!response.ok) {
@@ -80,20 +68,10 @@ export default function HistoricoGeralPage() {
       
       const data = await response.json();
       
-      if (data.success) {
-        setAnalises(data.analises || []);
-        setAnalisesFiltered(data.analises || []);
-        setError("");
-        
-        if (!silent) {
-          console.log(`✅ ${data.analises?.length || 0} análises carregadas`);
-        }
-      } else {
-        console.log('❌ API retornou erro:', data.error);
-        setError(data.error || 'Erro ao carregar histórico');
-      }
+      setAnalises(data);
+      setAnalisesFiltered(data);
+      setError("");
     } catch (err) {
-      console.error('❌ Erro ao carregar análises:', err);
       setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
@@ -102,15 +80,11 @@ export default function HistoricoGeralPage() {
 
   const aplicarFiltros = () => {
     if (analises.length === 0) {
-      console.log('Nenhuma análise disponível para filtrar');
       setAnalisesFiltered([]);
       return;
     }
 
     let filtered = [...analises];
-
-    // Debug: verificar dados
-    console.log('Dados para filtrar:', analises.length, 'análises');
 
     // Filtro por colaborador
     if (filtroColaborador) {
@@ -129,7 +103,6 @@ export default function HistoricoGeralPage() {
       analise.equilibrio >= filtroEquilibrio.min && analise.equilibrio <= filtroEquilibrio.max
     );
 
-    console.log('Dados filtrados:', filtered.length, 'de', analises.length);
     setAnalisesFiltered(filtered);
   };
 
@@ -186,7 +159,7 @@ export default function HistoricoGeralPage() {
         <div className="text-center bg-white p-8 rounded-xl shadow">
           <p className="text-red-600 mb-4">❌ {error}</p>
           <button 
-            onClick={() => fetchAnalises(false)}
+            onClick={() => fetchAnalises()}
             className="px-4 py-2 bg-[#025C3E] text-white rounded-lg hover:bg-[#038a5e] transition-all"
           >
             Tentar novamente
@@ -531,37 +504,7 @@ export default function HistoricoGeralPage() {
                 <p className="text-gray-500 text-sm mt-2">
                   As análises aparecerão aqui conforme os colaboradores respondem aos questionários
                 </p>
-                <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left text-xs">
-                  <p><strong>Debug Info:</strong></p>
-                  <p>• Loading: {loading.toString()}</p>
-                  <p>• Error: {error || 'nenhum'}</p>
-                  <p>• Total análises: {analises.length}</p>
-                  <p>• Análises filtradas: {analisesFiltered.length}</p>
-                  <div className="space-x-2 mt-2">
-                    <button 
-                      onClick={() => console.log('Estados atuais:', { loading, error, analises, analisesFiltered })}
-                      className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
-                    >
-                      Log Estados
-                    </button>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/test-busca');
-                          const result = await response.json();
-                          console.log('Teste de busca:', result);
-                          alert('Teste concluído - veja o console');
-                        } catch (err) {
-                          console.error('Erro no teste:', err);
-                          alert('Erro no teste - veja o console');
-                        }
-                      }}
-                      className="px-2 py-1 bg-green-500 text-white rounded text-xs"
-                    >
-                      Testar API
-                    </button>
-                  </div>
-                </div>
+
               </div>
             )}
           </div>
