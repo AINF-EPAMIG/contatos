@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import HeaderPainel from "@/components/HeaderPainel";
 import MenuPrincipal from "@/components/MenuPrincipal";
 
@@ -24,11 +24,14 @@ interface AnaliseCompleta {
 
 export default function HistoricoGeralPage() {
   const [analises, setAnalises] = useState<AnaliseCompleta[]>([]);
-  const [analisesFiltered, setAnalisesFiltered] = useState<AnaliseCompleta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAnalise, setSelectedAnalise] = useState<AnaliseCompleta | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [lastFetch, setLastFetch] = useState<number>(0);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   
   // Estados dos filtros
   const [filtroColaborador, setFiltroColaborador] = useState("");
@@ -38,27 +41,47 @@ export default function HistoricoGeralPage() {
   const [filtroDepressao, setFiltroDepressao] = useState({ min: 0, max: 100 });
   const [filtroEquilibrio, setFiltroEquilibrio] = useState({ min: 0, max: 100 });
 
-  useEffect(() => {
-    fetchAnalises();
+  // Usar useMemo para otimizar a aplicação de filtros
+  const analisesFiltered = useMemo(() => {
+    if (analises.length === 0) {
+      return [];
+    }
 
-    // Atualização automática a cada 10 segundos
-    // Buscar dados quando a página ganha foco (usuário volta para a aba)
-    const handleFocus = () => {
-      fetchAnalises();
-    };
-    window.addEventListener('focus', handleFocus);
+    let filtered = [...analises];
 
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
+    // Filtro por colaborador
+    if (filtroColaborador) {
+      filtered = filtered.filter(analise => 
+        analise.nome?.toLowerCase().includes(filtroColaborador.toLowerCase()) ||
+        analise.email?.toLowerCase().includes(filtroColaborador.toLowerCase())
+      );
+    }
 
-  useEffect(() => {
-    aplicarFiltros();
+    // Filtros por porcentagem
+    filtered = filtered.filter(analise => 
+      analise.estresse >= filtroEstresse.min && analise.estresse <= filtroEstresse.max &&
+      analise.ansiedade >= filtroAnsiedade.min && analise.ansiedade <= filtroAnsiedade.max &&
+      analise.burnout >= filtroBurnout.min && analise.burnout <= filtroBurnout.max &&
+      analise.depressao >= filtroDepressao.min && analise.depressao <= filtroDepressao.max &&
+      analise.equilibrio >= filtroEquilibrio.min && analise.equilibrio <= filtroEquilibrio.max
+    );
+
+    return filtered;
   }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
 
-  const fetchAnalises = async () => {
-    setLoading(true);
+  const fetchAnalises = useCallback(async (force = false) => {
+    // Evitar requisições muito frequentes (mínimo 5 segundos entre requests, exceto quando forçado)
+    const now = Date.now();
+    if (!force && now - lastFetch < 5000) {
+      return;
+    }
+
+    // Só mostrar loading se não temos dados ainda, senão usa refreshing
+    if (analises.length === 0) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError("");
     
     try {
@@ -81,43 +104,63 @@ export default function HistoricoGeralPage() {
       
       const data = await response.json();
       
-      setAnalises(data);
-      setAnalisesFiltered(data);
+      // Só atualizar se os dados realmente mudaram
+      if (JSON.stringify(data) !== JSON.stringify(analises)) {
+        setAnalises(data);
+        setLastUpdate(new Date());
+      }
       setError("");
+      setLastFetch(now);
     } catch (err) {
       setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [analises, lastFetch]);
 
-  const aplicarFiltros = () => {
-    if (analises.length === 0) {
-      setAnalisesFiltered([]);
-      return;
-    }
+  useEffect(() => {
+    // Carregar dados imediatamente ao montar o componente (força a primeira busca)
+    fetchAnalises(true);
 
-    let filtered = [...analises];
+    // Buscar dados quando a página ganha foco (usuário volta para a aba)
+    const handleFocus = () => {
+      fetchAnalises();
+    };
 
-    // Filtro por colaborador
-    if (filtroColaborador) {
-      filtered = filtered.filter(analise => 
-        analise.nome?.toLowerCase().includes(filtroColaborador.toLowerCase()) ||
-        analise.email?.toLowerCase().includes(filtroColaborador.toLowerCase())
-      );
-    }
+    // Buscar dados quando a aba se torna visível
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchAnalises();
+      }
+    };
 
-    // Filtros por porcentagem
-    filtered = filtered.filter(analise => 
-      analise.estresse >= filtroEstresse.min && analise.estresse <= filtroEstresse.max &&
-      analise.ansiedade >= filtroAnsiedade.min && analise.ansiedade <= filtroAnsiedade.max &&
-      analise.burnout >= filtroBurnout.min && analise.burnout <= filtroBurnout.max &&
-      analise.depressao >= filtroDepressao.min && analise.depressao <= filtroDepressao.max &&
-      analise.equilibrio >= filtroEquilibrio.min && analise.equilibrio <= filtroEquilibrio.max
-    );
+    // Buscar dados quando a conexão é restaurada
+    const handleOnline = () => {
+      setIsOnline(true);
+      fetchAnalises(true); // Força busca quando volta online
+    };
 
-    setAnalisesFiltered(filtered);
-  };
+    // Detectar quando fica offline
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    // Verificar status inicial
+    setIsOnline(navigator.onLine);
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [fetchAnalises]);
 
   const limparFiltros = () => {
     setFiltroColaborador("");
@@ -201,10 +244,25 @@ export default function HistoricoGeralPage() {
             {/* Header */}
             <div className="bg-[#025C3E] text-white p-3 sm:p-4 flex-shrink-0">
               <div className="flex justify-between items-center">
-                <div>
+                <div className="flex items-center gap-3">
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">📊 Histórico Geral de Análises</h1>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm opacity-75">
+                      Atualizado: {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {!isOnline && (
+                      <span className="text-xs bg-red-500 bg-opacity-20 text-red-100 px-2 py-0.5 rounded">
+                        Offline
+                      </span>
+                    )}
+                    {refreshing && (
+                      <div className="flex items-center gap-1">
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white opacity-75"></div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {loading && (
+                {loading && analises.length === 0 && (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     <span className="text-sm">Carregando...</span>
@@ -265,11 +323,10 @@ export default function HistoricoGeralPage() {
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 gap-2">
                 <p className="text-xs sm:text-sm text-gray-600 truncate">
-                                  <p className="text-xs text-gray-600 truncate">
                   {analisesFiltered.length} de {analises.length} análises
-                  {loading && <span className="text-orange-600 ml-2">(Carregando...)</span>}
+                  {loading && analises.length === 0 && <span className="text-orange-600 ml-2">(Carregando...)</span>}
+                  {refreshing && analises.length > 0 && <span className="text-blue-600 ml-2">(Atualizando...)</span>}
                   {error && <span className="text-red-600 ml-2">(Erro!)</span>}
-                </p>
                 </p>
                 <button
                   onClick={limparFiltros}
