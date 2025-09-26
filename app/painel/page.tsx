@@ -74,7 +74,13 @@ export default function PainelPage() {
       justificativa_ia: string;
     };
     porcentagens: { [key: string]: number };
-    respostasDetalhadas?: { pergunta: string; resposta: string }[];
+    respostasDetalhadas?: Array<{
+      grupo: string;
+      perguntas: Array<{
+        texto: string;
+        resposta: string;
+      }>;
+    }>;
     alerta: string;
     dicas: string;
     justificativa: string;
@@ -114,6 +120,12 @@ export default function PainelPage() {
       console.log("Resultado do servidor:", result);
       
       if (result.success) {
+        console.log('✅ Resposta salva com sucesso!');
+        console.log('📊 Porcentagens:', result.porcentagens);
+        console.log('📋 Respostas detalhadas:', result.respostasDetalhadas);
+        console.log('🚨 Alertas:', result.alerta);
+        console.log('💡 Dicas:', result.dicas);
+        
         setResultado({
           analise: result.analise,
           porcentagens: result.porcentagens,
@@ -182,14 +194,28 @@ export default function PainelPage() {
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-xl mb-4">
                 <h3 className="font-bold text-gray-800 mb-4">📝 Suas Respostas:</h3>
                 <div className="space-y-4">
-                  {resultado.respostasDetalhadas?.map((item, idx: number) => (
-                    <div key={idx} className="border-l-4 border-[#025C3E] pl-4">
-                      <div className="mb-2 text-sm">
-                        <p className="text-gray-700 mb-1">{item.pergunta}</p>
-                        <p className="font-semibold text-gray-900">
-                          Resposta: {item.resposta}
-                        </p>
-                      </div>
+                  {resultado.respostasDetalhadas?.map((grupo: {
+                    grupo: string;
+                    perguntas: Array<{
+                      texto: string;
+                      resposta: string;
+                    }>;
+                  }, idx: number) => (
+                    <div key={idx} className="mb-4">
+                      <h4 className="font-semibold text-[#025C3E] mb-3 text-sm">{grupo.grupo}</h4>
+                      {grupo.perguntas.map((pergunta, pIdx: number) => (
+                        <div key={pIdx} className="border-l-4 border-[#025C3E] pl-4 mb-3">
+                          <div className="mb-2 text-sm">
+                            <p className="text-gray-700 mb-1">{pergunta.texto}</p>
+                            <p className="font-semibold text-gray-900">
+                              {grupo.grupo === 'Desabafo (opcional)' 
+                                ? `"${pergunta.resposta}"` 
+                                : `Resposta: ${pergunta.resposta}/5`
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>

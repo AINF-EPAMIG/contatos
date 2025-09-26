@@ -29,7 +29,6 @@ export default function HistoricoGeralPage() {
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAnalise, setSelectedAnalise] = useState<AnaliseCompleta | null>(null);
-  const [autoReload, setAutoReload] = useState(false);
   
   // Estados dos filtros
   const [filtroColaborador, setFiltroColaborador] = useState("");
@@ -40,8 +39,8 @@ export default function HistoricoGeralPage() {
   const [filtroEquilibrio, setFiltroEquilibrio] = useState({ min: 0, max: 100 });
 
   useEffect(() => {
-    console.log('🚀 HistoricoGeral: useEffect executado, iniciando fetchAnalises');
-    fetchAnalises();
+    console.log('🚀 HistoricoGeral: Carregando dados iniciais...');
+    fetchAnalises(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -50,31 +49,23 @@ export default function HistoricoGeralPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analises, filtroColaborador, filtroEstresse, filtroAnsiedade, filtroBurnout, filtroDepressao, filtroEquilibrio]);
 
-  // Auto-reload a cada 30 segundos se ativado
+  // Auto-reload a cada 10 segundos para dados em tempo real
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (autoReload) {
-      interval = setInterval(() => {
-        console.log('🔄 Auto-reload executando...');
-        fetchAnalises();
-      }, 30000); // 30 segundos
-    }
+    const interval = setInterval(() => {
+      fetchAnalises(true); // silent = true para atualizações automáticas
+    }, 10000); // 10 segundos
     
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      clearInterval(interval);
     };
-  }, [autoReload]);
+  }, []);
 
-  const fetchAnalises = async () => {
-    console.log('📡 Iniciando fetchAnalises...');
+  const fetchAnalises = async (silent = false) => {
+    if (!silent) console.log('📡 Carregando dados do histórico...');
     setLoading(true);
     setError("");
     
     try {
-      console.log('🔗 Fazendo requisição para /api/historico-analises');
       const response = await fetch('/api/historico-analises', {
         method: 'GET',
         headers: {
@@ -83,24 +74,19 @@ export default function HistoricoGeralPage() {
         cache: 'no-store' // Força buscar dados atuais
       });
       
-      console.log('📨 Response status:', response.status);
-      console.log('📨 Response ok:', response.ok);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('📋 Dados recebidos:', data);
       
       if (data.success) {
-        console.log('✅ Sucesso! Análises recebidas:', data.analises?.length || 0);
         setAnalises(data.analises || []);
         setAnalisesFiltered(data.analises || []);
         setError("");
         
-        if (data.analises?.length === 0) {
-          console.log('⚠️ Nenhuma análise encontrada no banco');
+        if (!silent) {
+          console.log(`✅ ${data.analises?.length || 0} análises carregadas`);
         }
       } else {
         console.log('❌ API retornou erro:', data.error);
@@ -111,7 +97,6 @@ export default function HistoricoGeralPage() {
       setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setLoading(false);
-      console.log('🔚 fetchAnalises finalizado');
     }
   };
 
@@ -201,7 +186,7 @@ export default function HistoricoGeralPage() {
         <div className="text-center bg-white p-8 rounded-xl shadow">
           <p className="text-red-600 mb-4">❌ {error}</p>
           <button 
-            onClick={fetchAnalises}
+            onClick={() => fetchAnalises(false)}
             className="px-4 py-2 bg-[#025C3E] text-white rounded-lg hover:bg-[#038a5e] transition-all"
           >
             Tentar novamente
@@ -232,36 +217,19 @@ export default function HistoricoGeralPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">📊 Histórico Geral de Análises</h1>
-                  <p className="text-green-100 mt-1 text-xs sm:text-sm truncate">Acompanhamento do bem-estar de todos os colaboradores</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setAutoReload(!autoReload)}
-                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                      autoReload 
-                        ? 'bg-yellow-600 hover:bg-yellow-700' 
-                        : 'bg-gray-600 hover:bg-gray-700'
-                    }`}
-                  >
-                    {autoReload ? '⏸️ Auto' : '▶️ Auto'}
-                  </button>
-                  <button
-                    onClick={fetchAnalises}
-                    disabled={loading}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Carregando...
-                      </>
-                    ) : (
-                      <>
-                        🔄 Atualizar
-                      </>
+                  <p className="text-green-100 mt-1 text-xs sm:text-sm truncate">
+                    Acompanhamento do bem-estar • Sincronização automática a cada 10s
+                    {!loading && (
+                      <span className="ml-2 inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     )}
-                  </button>
+                  </p>
                 </div>
+                {loading && (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span className="text-sm">Carregando...</span>
+                  </div>
+                )}
               </div>
             </div>
 
