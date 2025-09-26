@@ -42,10 +42,6 @@ export default function HistoricoGeralPage() {
     fetchAnalises();
 
     // Atualização automática a cada 10 segundos
-    const intervalId = setInterval(() => {
-      fetchAnalises();
-    }, 1000);
-
     // Buscar dados quando a página ganha foco (usuário volta para a aba)
     const handleFocus = () => {
       fetchAnalises();
@@ -53,7 +49,6 @@ export default function HistoricoGeralPage() {
     window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
