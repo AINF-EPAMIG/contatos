@@ -23,15 +23,40 @@ interface AnaliseCompleta {
 }
 
 export default function HistoricoGeralPage() {
-  const [analises, setAnalises] = useState<AnaliseCompleta[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Tentar recuperar dados do cache na inicialização
+  const getInitialData = (): { data: AnaliseCompleta[], time: Date } => {
+    if (typeof window === 'undefined') return { data: [], time: new Date() };
+    
+    try {
+      const cachedData = localStorage.getItem('historico-analises');
+      const cachedTime = localStorage.getItem('historico-analises-timestamp');
+      
+      if (cachedData && cachedTime) {
+        return { 
+          data: JSON.parse(cachedData), 
+          time: new Date(cachedTime)
+        };
+      }
+    } catch (e) {
+      console.warn('Erro ao recuperar cache inicial:', e);
+    }
+    
+    return { data: [], time: new Date() };
+  };
+
+  const initialCache = getInitialData();
+  
+  const [analises, setAnalises] = useState<AnaliseCompleta[]>(initialCache.data);
+  const [loading, setLoading] = useState(initialCache.data.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAnalise, setSelectedAnalise] = useState<AnaliseCompleta | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [lastUpdate, setLastUpdate] = useState<Date>(initialCache.time);
   const [lastFetch, setLastFetch] = useState<number>(0);
   const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
+  const [pageId] = useState<string>(`page-${Math.random().toString(36).substring(2, 9)}`);
   
   // Estados dos filtros
   const [filtroColaborador, setFiltroColaborador] = useState("");
@@ -77,16 +102,18 @@ export default function HistoricoGeralPage() {
     }
 
     // Só mostrar loading se não temos dados ainda, senão usa refreshing
+    setRefreshing(true);
     if (analises.length === 0) {
       setLoading(true);
-    } else {
-      setRefreshing(true);
     }
     setError("");
     
     try {
       // Adiciona timestamp para evitar qualquer cache
       const timestamp = new Date().getTime();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos timeout
+      
       const response = await fetch(`/api/historico-analises?t=${timestamp}`, {
         method: 'GET',
         headers: {
@@ -95,8 +122,11 @@ export default function HistoricoGeralPage() {
           'Pragma': 'no-cache',
           'Expires': '0'
         },
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -104,25 +134,107 @@ export default function HistoricoGeralPage() {
       
       const data = await response.json();
       
-      // Só atualizar se os dados realmente mudaram
-      if (JSON.stringify(data) !== JSON.stringify(analises)) {
-        setAnalises(data);
-        setLastUpdate(new Date());
-      }
+      // Usamos uma função de atualização para evitar dependência de "analises"
+      setAnalises(prevAnalises => {
+        // Só atualizar se os dados realmente mudaram
+        const prevJson = JSON.stringify(prevAnalises);
+        const newJson = JSON.stringify(data);
+        
+        if (prevJson !== newJson) {
+          setLastUpdate(new Date());
+          // Salvar em cache local para recuperação em caso de erro
+          try {
+            localStorage.setItem('historico-analises', newJson);
+            localStorage.setItem('historico-analises-timestamp', new Date().toString());
+          } catch (e) {
+            console.warn('Não foi possível salvar em cache local:', e);
+          }
+          return data;
+        }
+        return prevAnalises;
+      });
+      
       setError("");
       setLastFetch(now);
-    } catch (err) {
-      setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
+    } catch (err: unknown) {
+      // Tratamento específico para timeout
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError("Tempo limite excedido. Servidor demorando para responder.");
+      } else {
+        setError(`Erro ao conectar com o servidor: ${err instanceof Error ? err.message : String(err)}`);
+      }
+      
+      // Se for o primeiro carregamento e não tivermos dados, tentamos buscar do localStorage
+      if (analises.length === 0) {
+        try {
+          const cachedData = localStorage.getItem('historico-analises');
+          if (cachedData) {
+            const parsedData = JSON.parse(cachedData);
+            setAnalises(parsedData);
+            setError(prev => prev + " (Mostrando dados em cache)");
+          }
+        } catch (cacheErr) {
+          console.error("Erro ao recuperar cache:", cacheErr);
+        }
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [analises, lastFetch]);
+  }, [lastFetch]); // Removido 'analises' das dependências
 
+  // Efeito para buscar dados inicialmente
   useEffect(() => {
-    // Carregar dados imediatamente ao montar o componente (força a primeira busca)
-    fetchAnalises(true);
+    // Registro da página para debug
+    console.log(`[${pageId}] Componente HistoricoGeral montado`);
+    
+    // Controle de retry com backoff exponencial
+    let retryCount = 0;
+    let retryTimeout: NodeJS.Timeout;
+    let isMounted = true;
+    
+    const fetchWithRetry = async () => {
+      if (!isMounted) return;
+      
+      try {
+        console.log(`[${pageId}] Iniciando busca de dados...`);
+        await fetchAnalises(true);
+        if (isMounted) {
+          console.log(`[${pageId}] Dados carregados com sucesso`);
+          setInitialLoad(false); // Marcar carregamento inicial como concluído
+          retryCount = 0; // Resetar contador de tentativas após sucesso
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        
+        console.error(`[${pageId}] Erro ao carregar dados:`, error);
+        if (retryCount < 3) { // Tentar no máximo 3 vezes
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Backoff exponencial (max 10s)
+          retryCount++;
+          
+          console.log(`[${pageId}] Tentando novamente em ${delay/1000}s (tentativa ${retryCount})`);
+          retryTimeout = setTimeout(fetchWithRetry, delay);
+        } else {
+          if (isMounted) {
+            console.log(`[${pageId}] Desistindo após ${retryCount} tentativas`);
+            setInitialLoad(false); // Desistir após 3 tentativas
+          }
+        }
+      }
+    };
 
+    // Carregar dados imediatamente ao montar o componente
+    fetchWithRetry();
+
+    return () => {
+      console.log(`[${pageId}] Componente HistoricoGeral desmontado`);
+      isMounted = false;
+      clearTimeout(retryTimeout);
+    };
+  }, [fetchAnalises]);
+  
+  // Efeito para configurar event listeners
+  useEffect(() => {
     // Buscar dados quando a página ganha foco (usuário volta para a aba)
     const handleFocus = () => {
       fetchAnalises();
@@ -149,6 +261,7 @@ export default function HistoricoGeralPage() {
     // Verificar status inicial
     setIsOnline(navigator.onLine);
 
+    // Adicionar event listeners
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
@@ -198,32 +311,28 @@ export default function HistoricoGeralPage() {
     setSelectedAnalise(null);
   };
 
-  if (loading) {
+  // Mostrar tela de carregamento apenas no carregamento inicial sem dados em cache
+  if (loading && analises.length === 0 && initialLoad) {
     return (
       <div className="min-h-screen bg-gray-50 pt-[80px] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#025C3E] mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando histórico geral...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 pt-[80px] flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-xl shadow">
-          <p className="text-red-600 mb-4">❌ {error}</p>
           <button 
-            onClick={() => fetchAnalises()}
-            className="px-4 py-2 bg-[#025C3E] text-white rounded-lg hover:bg-[#038a5e] transition-all"
+            onClick={() => {
+              setInitialLoad(false);
+              setLoading(false);
+            }} 
+            className="mt-4 px-4 py-2 bg-gray-600 text-white text-sm rounded hover:bg-gray-700"
           >
-            Tentar novamente
+            Continuar mesmo assim
           </button>
         </div>
       </div>
     );
   }
+
+  // Não bloqueamos mais a interface por erros - mostramos uma notificação em vez disso
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
@@ -262,13 +371,39 @@ export default function HistoricoGeralPage() {
                     )}
                   </div>
                 </div>
-                {loading && analises.length === 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span className="text-sm">Carregando...</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {loading && analises.length === 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span className="text-sm">Carregando...</span>
+                    </div>
+                  )}
+                  {error && (
+                    <button 
+                      onClick={() => fetchAnalises(true)}
+                      className="flex items-center gap-1 bg-red-600 px-2 py-1 rounded text-xs font-semibold hover:bg-red-700"
+                      title={error}
+                    >
+                      <span>⚠️</span>
+                      <span className="hidden sm:inline">Erro - Clique para tentar novamente</span>
+                      <span className="sm:hidden">Tentar novamente</span>
+                    </button>
+                  )}
+                </div>
               </div>
+              
+              {/* Mostrar mensagem de erro em uma barra flutuante se houver erro */}
+              {error && (
+                <div className="mt-2 p-2 bg-red-600 bg-opacity-80 text-white text-sm rounded flex justify-between items-center">
+                  <span>{error}</span>
+                  <button 
+                    onClick={() => setError("")} 
+                    className="ml-2 text-white hover:text-red-200"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Filtros */}
