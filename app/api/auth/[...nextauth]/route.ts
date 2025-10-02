@@ -1,7 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import mysql from "mysql2/promise";
-import { saudeMentalDB } from "@/lib/db";
 
 // Banco de autenticação: quadro_funcionarios
 const db = mysql.createPool({
@@ -56,20 +55,6 @@ const handler = NextAuth({
             token.cpf = userDb.cpf;
             token.cargo = userDb.cargo;
             token.tipo = userDb.tipo;
-            // Verifica perfil especial na tabela usuario do banco saude_mental
-            try {
-              const [usuarios] = await saudeMentalDB.execute(
-                "SELECT * FROM usuario WHERE email = ? LIMIT 1",
-                [token.email]
-              ) as [mysql.RowDataPacket[], mysql.FieldPacket[]];
-              const usuario = Array.isArray(usuarios) && usuarios.length > 0 ? usuarios[0] : null;
-              if (usuario) {
-                token.tipo = usuario.tipo || null;
-              }
-            } catch (err) {
-              console.error("Erro ao buscar perfil especial:", err);
-              token.perfilEspecial = null;
-            }
           } else {
             // Se não encontrar usuário válido, não autentica
             throw new Error("Usuário não autorizado");
@@ -89,7 +74,6 @@ const handler = NextAuth({
         (session.user as UserJwtPayload).cpf = typeof token.cpf === 'string' ? token.cpf : undefined;
         (session.user as UserJwtPayload).cargo = typeof token.cargo === 'string' ? token.cargo : undefined;
         (session.user as UserJwtPayload).tipo = typeof token.tipo === 'string' ? token.tipo : undefined;
-        (session.user as UserJwtPayload).perfilEspecial = token.perfilEspecial ?? undefined;
       }
       return session;
     },

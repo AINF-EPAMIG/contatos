@@ -7,8 +7,8 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 // import MenuPrincipal from "@/components/MenuPrincipal";
 
 export const metadata = {
-  title: "Saúde Mental - EPAMIG",
-  description: "Gestão da Saúde Mental EPAMIG",
+  title: "Contato - EPAMIG",
+  description: "Gestão da Contato EPAMIG",
 };
   const inter = Inter({ subsets: ["latin"] });
 
