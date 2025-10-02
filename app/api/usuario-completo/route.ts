@@ -87,13 +87,13 @@ export async function GET(req: NextRequest) {
         c.fazenda_id,
         c.diretoria_id,
         c.gabinete_id,
-         r.nome_regional       AS regional_nome,
-    d.nome_departamento   AS departamento_nome,
-    dv.nome_divisao      AS divisao_nome,
-    a.nome_assessoria       AS assessoria_nome,
-    f.nome_fazenda       AS fazenda_nome,
-    dir.nome_diretoria     AS diretoria_nome,
-    g.nome_gabinete       AS gabinete_nome
+        r.nome_regional       AS regional_nome,
+        d.nome_departamento   AS departamento_nome,
+        dv.nome_divisao       AS divisao_nome,
+        a.nome_assessoria     AS assessoria_nome,
+        f.nome_fazenda        AS fazenda_nome,
+        dir.nome_diretoria    AS diretoria_nome,
+        g.nome_gabinete       AS gabinete_nome
       FROM colaboradores c
       LEFT JOIN regional r       ON c.regional_id = r.id
       LEFT JOIN departamentos d  ON c.departamento_id = d.id
@@ -104,33 +104,6 @@ export async function GET(req: NextRequest) {
       LEFT JOIN gabinete g       ON c.gabinete_id = g.id
       WHERE c.email = ?
         AND c.status = 1
-interface UsuarioCompleto {
-      id: number;
-      nome: string;
-      email: string;
-      cargo: string;
-      telefone: string;
-      foto_perfil: string;
-      regional_id: number;
-      regional_nome: string;
-      departamento_id: number;
-      departamento_nome: string;
-      divisao_id: number;
-      divisao_nome: string;
-      assessoria_id: number;
-      assessoria_nome: string;
-      fazenda_id: number;
-      fazenda_nome: string;
-      diretoria_id: number;
-      diretoria_nome: string;
-      gabinete_id: number;
-      gabinete_nome: string;
-    }
-
-    interface EmailUser {
-      email: string;
-    }
-
     `, [email]) as [UsuarioCompleto[], unknown];
 
     console.log("Query executada. Rows:", rows);

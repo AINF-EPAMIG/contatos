@@ -26,7 +26,7 @@ export async function GET() {
         c.telefone,
         c.status,
         c.regional_id,
-        r.nome AS regional_nome
+        r.nome_regional AS regional_nome
       FROM colaboradores c
       LEFT JOIN regional r ON c.regional_id = r.id
       LIMIT 10
