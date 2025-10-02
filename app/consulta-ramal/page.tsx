@@ -57,39 +57,43 @@ function HeaderConsultaRamal() {
         </div>
         <div className="header-right header-actions-v2">
           <a 
-            href="https://epamig.br" 
+            href="https://www.epamig.br" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="header-action-item-v2"
-            title="Site Institucional"
-            aria-label="Acessar site institucional da EPAMIG"
+            title="Site Oficial"
+            aria-label="Acessar site oficial da EPAMIG"
           >
             <div className="header-icon-btn-v2">
               <Globe size={24} />
             </div>
-            <span className="header-action-label-v2" style={{ color: '#111' }}>SITE</span>
+            <span className="header-action-label-v2" style={{ color: '#111' }}>SITE OFICIAL</span>
           </a>
           <a 
-            href="#" 
+            href="https://mail.google.com/mail/u/0/#inbox" 
+            target="_blank" 
+            rel="noopener noreferrer" 
             className="header-action-item-v2"
-            title="Sistema TOTVS"
-            aria-label="Acessar sistema TOTVS"
-          >
-            <div className="header-icon-btn-v2">
-              <Image src="/icon_totvs.svg" alt="TOTVS" className="totvs-icon" width={24} height={24} />
-            </div>
-            <span className="header-action-label-v2" style={{ color: '#111' }}>PORTAL ADM</span>
-          </a>
-          <a 
-            href="mailto:contato@epamig.br" 
-            className="header-action-item-v2"
-            title="Enviar E-mail"
-            aria-label="Enviar e-mail para contato@epamig.br"
+            title="Abrir Gmail"
+            aria-label="Abrir Gmail"
           >
             <div className="header-icon-btn-v2">
               <Mail size={24} />
             </div>
             <span className="header-action-label-v2" style={{ color: '#111' }}>E-MAIL</span>
+          </a>
+          <a 
+            href="https://empresade125369.rm.cloudtotvs.com.br/Corpore.Net/Login.aspx" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="header-action-item-v2"
+            title="Portal ADM TOTVS"
+            aria-label="Acessar Portal ADM TOTVS"
+          >
+            <div className="header-icon-btn-v2">
+              <Image src="/icon_totvs.svg" alt="TOTVS" className="totvs-icon" width={24} height={24} />
+            </div>
+            <span className="header-action-label-v2" style={{ color: '#111' }}>PORTAL ADM</span>
           </a>
         </div>
       </div>
