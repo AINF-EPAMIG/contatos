@@ -1,12 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { funcionariosDB } from "@/lib/db";
 
+// Força renderização dinâmica para evitar erro de static rendering
+export const dynamic = 'force-dynamic';
+
+interface ColaboradorDetalhes {
+  id: number;
+  nome: string;
+  email: string;
+  cargo: string;
+  telefone: string;
+  regional_nome: string;
+  departamento_nome: string;
+  divisao_nome: string;
+  assessoria_nome: string;
+  fazenda_nome: string;
+  diretoria_nome: string;
+  gabinete_nome: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== Iniciando busca de detalhes do colaborador ===');
+    
     const { email } = await request.json();
 
     if (!email) {
+      console.log('Erro: E-mail não fornecido');
       return NextResponse.json({ success: false, message: "E-mail é obrigatório" }, { status: 400 });
+    }
+
+    console.log('Buscando detalhes para o email:', email);
+
+    // Teste de conexão
+    try {
+      await funcionariosDB.execute('SELECT 1');
+      console.log('Conexão com banco de dados OK');
+    } catch (connError) {
+      console.error('Erro de conexão com banco:', connError);
+      return NextResponse.json({ 
+        success: false, 
+        message: "Erro de conexão com banco de dados" 
+      }, { status: 500 });
     }
 
     const [rows] = await funcionariosDB.execute(
@@ -38,33 +73,26 @@ export async function POST(request: NextRequest) {
       LEFT JOIN fazenda f ON c.fazenda_id = f.id
       LEFT JOIN diretoria dir ON c.diretoria_id = dir.id
       LEFT JOIN gabinete g ON c.gabinete_id = g.id
-      WHERE c.email = ? AND c.status = 1`,
+      WHERE c.email = ? AND c.status = 1
+      LIMIT 1`,
       [email]
     );
 
-interface ColaboradorDetalhes {
-      id: number;
-      nome: string;
-      email: string;
-      cargo: string;
-      telefone: string;
-      foto_perfil: string;
-      regional_nome: string;
-      departamento_nome: string;
-      divisao_nome: string;
-      assessoria_nome: string;
-      fazenda_nome: string;
-      diretoria_nome: string;
-      gabinete_nome: string;
-    }
+    console.log('Resultado da query:', { 
+      rowCount: Array.isArray(rows) ? rows.length : 0,
+      email: email 
+    });
 
     const colaborador = (rows as ColaboradorDetalhes[])[0];
 
     if (!colaborador) {
+      console.log('Colaborador não encontrado para o email:', email);
       return NextResponse.json({ success: false, message: "Colaborador não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json({ 
+    console.log('Colaborador encontrado:', colaborador.nome);
+
+    const response = { 
       success: true, 
       colaborador: {
         id: colaborador.id,
@@ -80,10 +108,20 @@ interface ColaboradorDetalhes {
         diretoria: colaborador.diretoria_nome ? { nome: colaborador.diretoria_nome } : null,
         gabinete: colaborador.gabinete_nome ? { nome: colaborador.gabinete_nome } : null,
       }
-    });
+    };
+
+    console.log('=== Busca de detalhes concluída com sucesso ===');
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error("Erro ao buscar colaborador:", error);
-    return NextResponse.json({ success: false, message: "Erro interno do servidor" }, { status: 500 });
+    console.error("=== Erro ao buscar colaborador ===");
+    console.error("Erro detalhado:", error);
+    console.error("Stack trace:", error instanceof Error ? error.stack : 'N/A');
+    
+    return NextResponse.json({ 
+      success: false, 
+      message: "Erro interno do servidor",
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+    }, { status: 500 });
   }
 }

@@ -107,7 +107,90 @@ export default function ConsultaRamalPage() {
   const [unitFilter, setUnitFilter] = useState("");
   const [selectedColaborador, setSelectedColaborador] = useState<ColaboradorDetalhado | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  const fetchColaboradorDetalhes = async (email: string) => {
+    setIsLoadingDetails(true);
+    
+    try {
+      // Buscar dados básicos da lista primeiro para garantir que sempre temos algo
+      const colaboradorBasico = colaboradores.find(c => c.email === email);
+      
+      if (!colaboradorBasico) {
+        console.error('Colaborador não encontrado na lista');
+        setIsLoadingDetails(false);
+        return;
+      }
+
+      // Definir dados básicos imediatamente para evitar null
+      const dadosBasicos = {
+        ...colaboradorBasico,
+        regional: colaboradorBasico.regional_nome ? { nome: colaboradorBasico.regional_nome } : null,
+        departamento: colaboradorBasico.departamento_nome ? { nome: colaboradorBasico.departamento_nome } : null,
+        divisao: colaboradorBasico.divisao_nome ? { nome: colaboradorBasico.divisao_nome } : null,
+        assessoria: colaboradorBasico.assessoria_nome ? { nome: colaboradorBasico.assessoria_nome } : null,
+        fazenda: colaboradorBasico.fazenda_nome ? { nome: colaboradorBasico.fazenda_nome } : null,
+        diretoria: colaboradorBasico.diretoria_nome ? { nome: colaboradorBasico.diretoria_nome } : null,
+        gabinete: colaboradorBasico.gabinete_nome ? { nome: colaboradorBasico.gabinete_nome } : null,
+      };
+      
+      setSelectedColaborador(dadosBasicos);
+
+      const response = await fetch('/api/usuario-detalhes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      console.log('Status da resposta:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Erro HTTP:', response.status, errorText);
+        // Manter dados básicos já definidos
+        return;
+      }
+
+      const data = await response.json();
+      console.log('Dados recebidos da API:', data);
+      
+      if (data.success && data.colaborador) {
+        console.log('Detalhes carregados com sucesso para:', colaboradorBasico.nome);
+        setSelectedColaborador({
+          ...data.colaborador,
+          nome: colaboradorBasico.nome, // Força o uso do nome da tabela
+          email: colaboradorBasico.email, // Garante consistência do email também
+          telefone: colaboradorBasico.telefone, // Garante consistência do telefone
+        });
+      }
+      // Se API falhar, mantém dados básicos já definidos
+      
+    } catch (error) {
+      console.error('=== ERRO ao buscar detalhes do colaborador ===');
+      console.error('Erro:', error);
+      
+      // Em caso de erro, garantir que ainda temos dados básicos
+      const colaboradorBasico = colaboradores.find(c => c.email === email);
+      if (colaboradorBasico) {
+        console.log('Usando dados básicos para:', colaboradorBasico.nome);
+        setSelectedColaborador({
+          ...colaboradorBasico,
+          regional: colaboradorBasico.regional_nome ? { nome: colaboradorBasico.regional_nome } : null,
+          departamento: colaboradorBasico.departamento_nome ? { nome: colaboradorBasico.departamento_nome } : null,
+          divisao: colaboradorBasico.divisao_nome ? { nome: colaboradorBasico.divisao_nome } : null,
+          assessoria: colaboradorBasico.assessoria_nome ? { nome: colaboradorBasico.assessoria_nome } : null,
+          fazenda: colaboradorBasico.fazenda_nome ? { nome: colaboradorBasico.fazenda_nome } : null,
+          diretoria: colaboradorBasico.diretoria_nome ? { nome: colaboradorBasico.diretoria_nome } : null,
+          gabinete: colaboradorBasico.gabinete_nome ? { nome: colaboradorBasico.gabinete_nome } : null,
+        });
+      }
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/consulta-ramal")
@@ -228,10 +311,10 @@ export default function ConsultaRamalPage() {
         <div className="action-cell">
           <button 
             className="action-btn primary"
-            onClick={e => { 
+            onClick={async (e) => { 
               e.stopPropagation(); 
-              setSelectedColaborador(row.original as ColaboradorDetalhado); 
-              setIsModalOpen(true); 
+              setIsModalOpen(true);
+              await fetchColaboradorDetalhes(row.original.email); 
             }}
             title="Ver detalhes do colaborador"
           >
@@ -418,9 +501,9 @@ export default function ConsultaRamalPage() {
                   <div className="card-actions">
                     <button 
                       className="card-btn"
-                      onClick={() => {
-                        setSelectedColaborador(colaborador as ColaboradorDetalhado);
+                      onClick={async () => {
                         setIsModalOpen(true);
+                        await fetchColaboradorDetalhes(colaborador.email);
                       }}
                     >
                       <Eye className="btn-icon-card" />
@@ -434,186 +517,130 @@ export default function ConsultaRamalPage() {
         )}
       </div>
       {/* Modal */}
-      {isModalOpen && selectedColaborador && (
+      {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">{selectedColaborador.nome}</h2>
-              {selectedColaborador.cargo && (
-                <p className="modal-subtitle">{selectedColaborador.cargo}</p>
-              )}
-            </div>
-            <div className="modal-body">
-              {/* Contato */}
-              <div className="modal-section">
-                <h3 className="section-title">Informações de Contato</h3>
-                <div className="info-card-unico info-card-unico-visual">
-                  {/* Todas as informações agrupadas em um único card visual */}
-                  <div className="info-list" style={{ padding: '16px 8px' }}>
-                    {selectedColaborador.email && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <Mail size={18} className="info-icon info-icon-spaced" style={{ marginRight: '12px', color: '#025C3E' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>E-mail:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.email}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.telefone && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <Phone size={18} className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Telefone:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.telefone}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.diretoria && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Diretoria:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.diretoria?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.regional && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <MapPin className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Regional:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.regional?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.departamento && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <Calendar className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Departamento:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.departamento?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.divisao && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <Users className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Divisão:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.divisao?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.assessoria && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <Mail className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Assessoria:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.assessoria?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.fazenda && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ width: 20, height: 20, marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Fazenda:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.fazenda?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                    {selectedColaborador.gabinete && (
-                      <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
-                        <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
-                        <div className="info-label-value">
-                          <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Gabinete:</span>
-                          <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.gabinete?.nome}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {isLoadingDetails ? (
+              <div className="modal-loading">
+                <div className="loading-spinner"></div>
+                <p>Carregando detalhes...</p>
               </div>
-
-              {/* Cartão Institucional de Lotação */}
-              {(selectedColaborador.regional?.nome ||
-                selectedColaborador.departamento?.nome ||
-                selectedColaborador.divisao?.nome ||
-                selectedColaborador.assessoria?.nome ||
-                selectedColaborador.fazenda?.nome ||
-                selectedColaborador.diretoria?.nome ||
-                selectedColaborador.gabinete?.nome) && (
-                <div className="modal-section">
-                  <h3 className="section-title">Lotação Institucional</h3>
-                  <div className="institutional-card">
-                    <div className="institutional-header">
-                      <BuildingOfficeIcon className="institutional-icon" />
-                      <div className="institutional-title">
-                        <h4>EPAMIG - Empresa de Pesquisa Agropecuária de Minas Gerais</h4>
-                        <p>Lotação do Colaborador</p>
+            ) : selectedColaborador ? (
+              <>
+                <div className="modal-header">
+                  <h2 className="modal-title">{selectedColaborador.nome}</h2>
+                  {selectedColaborador.cargo && (
+                    <p className="modal-subtitle">{selectedColaborador.cargo}</p>
+                  )}
+                </div>
+                <div className="modal-body">
+                  <div className="modal-section">
+                    <h3 className="section-title">Informações de Contato</h3>
+                    <div className="info-card-unico info-card-unico-visual">
+                      <div className="info-list" style={{ padding: '16px 8px' }}>
+                        {selectedColaborador.email && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <Mail size={18} className="info-icon info-icon-spaced" style={{ marginRight: '12px', color: '#025C3E' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>E-mail:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.email}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.telefone && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <Phone size={18} className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Telefone:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.telefone}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.regional && selectedColaborador.regional.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <MapPin size={18} className="info-icon info-icon-spaced" style={{ marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Regional:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.regional.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.fazenda && selectedColaborador.fazenda.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Fazenda:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.fazenda.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.diretoria && selectedColaborador.diretoria.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Diretoria:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.diretoria.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.departamento && selectedColaborador.departamento.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <Calendar className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Departamento:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.departamento.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.divisao && selectedColaborador.divisao.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <Users className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Divisão:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.divisao.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.assessoria && selectedColaborador.assessoria.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <Mail className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Assessoria:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.assessoria.nome}</span>
+                            </div>
+                          </div>
+                        )}
+                        {selectedColaborador.gabinete && selectedColaborador.gabinete.nome && (
+                          <div className="info-row" style={{ marginBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                            <BuildingOfficeIcon className="info-icon info-icon-spaced" style={{ width: 18, height: 18, marginRight: '12px' }} />
+                            <div className="info-label-value">
+                              <span className="info-label" style={{ color: '#222', fontWeight: 500 }}>Gabinete:</span>
+                              <span className="info-value" style={{ color: '#222', marginLeft: 6 }}>{selectedColaborador.gabinete.nome}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="institutional-body">
-                      {selectedColaborador.diretoria && selectedColaborador.diretoria.nome && (
-                        <div className="lotacao-item">
-                          <BuildingOfficeIcon className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Diretoria:</span>
-                          <span className="lotacao-value">{selectedColaborador.diretoria.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.regional && selectedColaborador.regional.nome && (
-                        <div className="lotacao-item">
-                          <MapPin className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Regional:</span>
-                          <span className="lotacao-value">{selectedColaborador.regional.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.departamento && selectedColaborador.departamento.nome && (
-                        <div className="lotacao-item">
-                          <Calendar className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Departamento:</span>
-                          <span className="lotacao-value">{selectedColaborador.departamento.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.divisao && selectedColaborador.divisao.nome && (
-                        <div className="lotacao-item">
-                          <Users className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Divisão:</span>
-                          <span className="lotacao-value">{selectedColaborador.divisao.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.assessoria && selectedColaborador.assessoria.nome && (
-                        <div className="lotacao-item">
-                          <Mail className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Assessoria:</span>
-                          <span className="lotacao-value">{selectedColaborador.assessoria.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.fazenda && selectedColaborador.fazenda.nome && (
-                        <div className="lotacao-item">
-                          <BuildingOfficeIcon className="lotacao-icon info-icon-spaced" style={{ width: 20, height: 20 }} />
-                          <span className="lotacao-label">Fazenda:</span>
-                          <span className="lotacao-value">{selectedColaborador.fazenda.nome}</span>
-                        </div>
-                      )}
-                      {selectedColaborador.gabinete && selectedColaborador.gabinete.nome && (
-                        <div className="lotacao-item">
-                          <BuildingOfficeIcon className="lotacao-icon info-icon-spaced" />
-                          <span className="lotacao-label">Gabinete:</span>
-                          <span className="lotacao-value">{selectedColaborador.gabinete.nome}</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="modal-close-btn"
+                  >
+                    Fechar
+                  </button>
                 </div>
-              )}
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="modal-close-btn"
-              >
-                Fechar
-              </button>
-            </div>
+              </>
+            ) : (
+              <div className="modal-error">
+                <p>Erro ao carregar detalhes do colaborador.</p>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="modal-close-btn"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

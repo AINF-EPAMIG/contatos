@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import mysql from "mysql2/promise";
 
+// Força renderização dinâmica para evitar erro de static rendering
+export const dynamic = 'force-dynamic';
+
 interface UsuarioCompleto {
   id: number;
   nome: string;

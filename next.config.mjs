@@ -3,7 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverComponentsExternalPackages: ['mysql2'],
-    pwa: true,
   },
   images: {
     remotePatterns: [
@@ -19,6 +18,14 @@ const nextConfig = {
       },
     ],
   },
+  // Otimizações para produção
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn']
+    } : false,
+  },
+  // Configuração de output para evitar problemas em produção
+  output: 'standalone',
 };
 
 export default nextConfig;

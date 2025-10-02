@@ -7,6 +7,7 @@ const db = mysql.createPool({
   user: process.env.DB_FUNC_USER || process.env.DB_USER || "root",
   password: process.env.DB_FUNC_PASSWORD || process.env.DB_PASSWORD || "",
   database: process.env.DB_FUNC_DATABASE || "quadro_funcionarios",
+  connectionLimit: 10,
 });
 
 interface CountResult {
@@ -17,8 +18,19 @@ interface EmailResult {
   email: string;
 }
 
+// Forçar rota como dinâmica
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
+    // Apenas executar em ambiente de desenvolvimento ou quando explicitamente solicitado
+    if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_TEST_ROUTES) {
+      return NextResponse.json({
+        success: false,
+        error: "Test routes are disabled in production"
+      }, { status: 403 });
+    }
+
     console.log("=== Test DB Connection ===");
     
     // Testar conexão
@@ -52,7 +64,7 @@ export async function GET() {
     return NextResponse.json({ 
       success: false, 
       error: error instanceof Error ? error.message : "Erro desconhecido",
-      stack: error instanceof Error ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
     }, { status: 500 });
   }
 }

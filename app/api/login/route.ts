@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getConexoes } from "@/lib/db";
 import type { Pool, RowDataPacket } from "mysql2/promise";
 
+// Força renderização dinâmica para evitar erro de static rendering
+export const dynamic = 'force-dynamic';
+
 interface Usuario extends RowDataPacket {
   id: number;
   email_institucional: string;

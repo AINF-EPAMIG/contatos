@@ -6,14 +6,25 @@ interface DatabaseRow {
   nome: string;
   email: string;
   cargo: string;
-  telefone: string;
+  telefone: string | null;
   status: number;
   regional_id: number;
   regional_nome: string;
 }
 
+// Forçar rota como dinâmica
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
+    // Apenas executar em ambiente de desenvolvimento ou quando explicitamente solicitado
+    if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_TEST_ROUTES) {
+      return NextResponse.json({
+        success: false,
+        error: "Test routes are disabled in production"
+      }, { status: 403 });
+    }
+
     console.log("=== API test-colaboradores ===");
     
     // Buscar todos os colaboradores ativos
@@ -44,7 +55,7 @@ export async function GET() {
     console.error("Erro ao buscar colaboradores:", error);
     return NextResponse.json({ 
       error: "Erro ao buscar colaboradores",
-      details: error instanceof Error ? error.message : "Unknown error"
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : "Unknown error") : "Internal server error"
     }, { status: 500 });
   }
 }
