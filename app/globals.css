@@ -23,6 +23,7 @@ body {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  font-size: 14px;
 }
 
 /* Configurações específicas para app mobile */

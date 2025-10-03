@@ -43,7 +43,7 @@ function HomeContent() {
       {/* Card centralizado */}
   <div className="flex flex-col items-center w-full max-w-lg">
         {/* Título acima do card */}
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center tracking-tight" style={{textShadow: '0 2px 8px #fff'}}>Contatos Institucionais EPAMIG</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 text-center tracking-tight" style={{textShadow: '0 2px 8px #fff'}}>Contatos Institucionais EPAMIG</h1>
         {/* Card de login */}
         <div className="bg-white/90 backdrop-blur-md p-10 rounded-2xl shadow-xl flex flex-col items-center gap-8 w-full max-w-md text-center mx-auto">
           {/* Logo EPAMIG */}

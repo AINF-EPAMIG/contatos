@@ -18,8 +18,8 @@ export default function HeaderPainel() {
       </div>
       {/* Texto central */}
       <div className="flex-1 flex flex-col items-center text-center px-1">
-        <span className="text-base sm:text-2xl font-bold text-[#025C3E] leading-tight">Empresa de Pesquisa Agropecuária de Minas Gerais</span>
-        <span className="text-xs sm:text-sm font-semibold text-[#025C3E]">Secretaria de Estado de Agricultura, Pecuária e Abastecimento de Minas Gerais</span>
+        <span className="text-sm sm:text-xl font-bold text-[#025C3E] leading-tight">Empresa de Pesquisa Agropecuária de Minas Gerais</span>
+        <span className="text-xs sm:text-xs font-semibold text-[#025C3E]">Secretaria de Estado de Agricultura, Pecuária e Abastecimento de Minas Gerais</span>
       </div>
       {/* Usuário à direita */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-[100px] sm:min-w-[180px] justify-end mt-2 sm:mt-0">
