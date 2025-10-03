@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -114,13 +114,13 @@ export default function ConsultaRamalPage() {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
-  const fetchColaboradorDetalhes = async (email: string) => {
+  const fetchColaboradorDetalhes = useCallback(async (email: string) => {
     setIsLoadingDetails(true);
-    
+
     try {
       // Buscar dados básicos da lista primeiro para garantir que sempre temos algo
       const colaboradorBasico = colaboradores.find(c => c.email === email);
-      
+
       if (!colaboradorBasico) {
         console.error('Colaborador não encontrado na lista');
         setIsLoadingDetails(false);
@@ -138,7 +138,7 @@ export default function ConsultaRamalPage() {
         diretoria: colaboradorBasico.diretoria_nome ? { nome: colaboradorBasico.diretoria_nome } : null,
         gabinete: colaboradorBasico.gabinete_nome ? { nome: colaboradorBasico.gabinete_nome } : null,
       };
-      
+
       setSelectedColaborador(dadosBasicos);
 
       const response = await fetch('/api/usuario-detalhes', {
@@ -148,9 +148,9 @@ export default function ConsultaRamalPage() {
         },
         body: JSON.stringify({ email }),
       });
-      
+
       console.log('Status da resposta:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Erro HTTP:', response.status, errorText);
@@ -160,7 +160,7 @@ export default function ConsultaRamalPage() {
 
       const data = await response.json();
       console.log('Dados recebidos da API:', data);
-      
+
       if (data.success && data.colaborador) {
         console.log('Detalhes carregados com sucesso para:', colaboradorBasico.nome);
         setSelectedColaborador({
@@ -171,11 +171,11 @@ export default function ConsultaRamalPage() {
         });
       }
       // Se API falhar, mantém dados básicos já definidos
-      
+
     } catch (error) {
       console.error('=== ERRO ao buscar detalhes do colaborador ===');
       console.error('Erro:', error);
-      
+
       // Em caso de erro, garantir que ainda temos dados básicos
       const colaboradorBasico = colaboradores.find(c => c.email === email);
       if (colaboradorBasico) {
@@ -194,7 +194,7 @@ export default function ConsultaRamalPage() {
     } finally {
       setIsLoadingDetails(false);
     }
-  };
+  }, [colaboradores]);
 
   useEffect(() => {
     fetch("/api/consulta-ramal")
@@ -328,7 +328,7 @@ export default function ConsultaRamalPage() {
         </div>
       ),
     }),
-  ], [setSelectedColaborador, setIsModalOpen]);
+  ], [setIsModalOpen, fetchColaboradorDetalhes]);
 
   const table = useReactTable({
     data: filteredRows,
