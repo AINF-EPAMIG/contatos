@@ -10,25 +10,13 @@ const handler = NextAuth({
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        return {
-          ...token,
-          id: user.id,
-        };
+    async redirect({ url, baseUrl }) {
+      // Redireciona para o painel após login bem-sucedido
+      if (url.startsWith(baseUrl) || url.startsWith("/")) {
+        return url;
       }
-      return token;
-    },
-
-    async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-        },
-      };
-    },
+      return `${baseUrl}/painel`;
+    }
   },
 
   pages: {
