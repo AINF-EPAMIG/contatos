@@ -349,9 +349,7 @@ export default function ConsultaRamalPage() {
               <UserGroupIcon className="hero-icon-minimal" />
               Contato dos Colaboradores da EPAMIG
             </h1>
-            <p className="hero-subtitle-minimal">
-              Sistema inteligente de consulta e gerenciamento de contatos corporativos
-            </p>
+           
           </div>
         </div>
       </div>
