@@ -25,7 +25,23 @@ function getUserField(user: unknown, field: string): string | undefined {
   return undefined;
 }
 
+// Em desenvolvimento, logar NEXTAUTH_URL e redirect esperado para ajudar debug
+if (process.env.NODE_ENV === 'development') {
+  try {
+    const base = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'http://localhost:3000';
+    const redirectExample = `${base.replace(/\/$/, '')}/api/auth/callback/google`;
+    console.log('DEBUG NextAuth - NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
+    console.log('DEBUG NextAuth - exemplo de redirect_uri esperado:', redirectExample);
+  } catch (e) {
+    // ignore
+  }
+}
+
 const handler = NextAuth({
+  // Ativa logs detalhados em desenvolvimento para diagnosticar problemas de callback/redirect
+  debug: process.env.NODE_ENV === 'development',
+  // Em dev, mostrar qual NEXTAUTH_URL está sendo usado para construir redirect_uris
+  ...(process.env.NODE_ENV === 'development' ? { events: { signIn: async (message) => { console.log('NextAuth signIn event:', message); } } } : {}),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
