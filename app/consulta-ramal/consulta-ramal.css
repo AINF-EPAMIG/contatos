@@ -387,7 +387,7 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 0.875rem 3rem 0.875rem 3rem;
+  padding: 0.75rem 3rem 0.75rem 3rem;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
@@ -408,9 +408,17 @@ body {
   font-weight: 400;
 }
 
+/* Agrupa os filtros da área de busca (input + select + botão) */
+.search-filters-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .unit-select {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 0.75rem 1rem;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
@@ -426,6 +434,54 @@ body {
   border-color: #025C3E;
   background: white;
   box-shadow: 0 0 0 3px rgba(2, 92, 62, 0.1);
+}
+
+/* Botão 'Atualizar Meu Contato' - cor institucional, sem sombra/efeito, acessível */
+
+/* Ajustes de layout para integrar o botão com os filtros */
+.update-contact-wrapper { display:flex; align-items:center; }
+
+/* Versão inline colocada ao lado do select de unidades */
+.update-contact-inline {
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+@media (max-width: 720px) {
+  .update-contact-inline { margin-left: 0; margin-top: 8px; width: 100%; }
+  .btn-institucional { width: 100%; justify-content: center; }
+  .search-filters-group { flex-direction: column; gap: 0.75rem; }
+}
+
+/* Botão institucional integrado */
+.btn-institucional {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  background-color: #2563EB; /* azul harmonizado recomendado */
+  color: #ffffff;
+  padding: 0 1rem;
+  height: 44px; /* mesma altura dos inputs */
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1px solid rgba(2,36,120,0.12);
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.btn-institucional-icon { width: 18px; height: 18px; color: #ffffff; }
+
+.btn-institucional:focus { outline: 3px solid rgba(37,99,235,0.22); outline-offset: 2px; }
+.btn-institucional:hover { opacity: 0.96; }
+
+@media (max-width: 720px) {
+  .update-contact-wrapper { margin-left: 0; margin-top: 8px; }
+  .btn-institucional { width: 100%; justify-content: center; }
+  .search-filters-group { flex-direction: column; gap: 0.75rem; }
 }
 
 /* Container da Tabela */

@@ -9,7 +9,7 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { ChevronUpDownIcon, XMarkIcon, UserGroupIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
-import { Globe, Mail, Phone, Search, Users, Eye, MapPin, Calendar } from "lucide-react";
+import { Globe, Mail, Phone, Search, Users, Eye, MapPin, Calendar, Edit } from "lucide-react";
 import Image from "next/image";
 import "./consulta-ramal.css";
 import "./modern-styles.css";
@@ -388,6 +388,21 @@ export default function ConsultaRamalPage() {
                 {unidades.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
+
+            {/* botão institucional: colocado ao lado do select de unidades para fácil acesso */}
+            <div className="update-contact-inline">
+              <a
+                className="btn-institucional"
+                href="https://contatos.epamig.tech/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Atualizar meus dados (abre em nova aba)"
+                aria-label="Atualizar meus dados - abre em nova aba"
+              >
+                <Edit className="btn-institucional-icon" aria-hidden="true" />
+                <span>Atualizar meu Contato</span>
+              </a>
+            </div>
           </div>
           
           <div className="filter-controls">
@@ -412,6 +427,9 @@ export default function ConsultaRamalPage() {
                 </svg>
                 <span className="view-text">Cartões</span>
               </button>
+            </div>
+            <div className="filter-actions">
+              {/* Espaço reservado para futuras ações de filtro (ex.: exportar, filtros avançados) */}
             </div>
           </div>
         </div>
