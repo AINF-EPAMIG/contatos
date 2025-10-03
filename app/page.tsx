@@ -31,7 +31,7 @@ function HomeContent() {
 
   return (
     <div
-      className="min-h-screen min-w-screen flex flex-col items-center justify-start bg-cover bg-center pt-20 md:pt-32"
+      className="flex-1 flex flex-col items-center justify-start bg-cover bg-center pt-20 md:pt-32"
       style={{ backgroundImage: "url('/ramal.png')" }}
     >
       {/* Mensagem de boas-vindas */}

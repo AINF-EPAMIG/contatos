@@ -72,11 +72,12 @@ export default function PainelPage(){
   if(carregando) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-center"><div className="w-16 h-16 border-4 border-[#025C3E] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-gray-600 font-semibold">Carregando dados...</p></div></div>;
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col">
       <MenuPrincipal />
       <HeaderPainel />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
-      <div className="app-wrapper">
+      <div className="flex-1">
+        <div className="app-wrapper">
         <div className="card-scale-wrapper" style={{transform:`scale(${scale})`, width: scale<1? `${100/scale}%`:'100%'}}>
           <div className="main-card" ref={cardRef}>
             <div className="header-epamig">
@@ -159,6 +160,7 @@ export default function PainelPage(){
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
       <Footer />

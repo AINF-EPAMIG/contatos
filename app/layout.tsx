@@ -20,9 +20,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="theme-color" content="#025C3E" />
         <link rel="apple-touch-icon" href="/epamig_logo.svg" />
       </head>
-        <body className={inter.className}>
+        <body className={`${inter.className} min-h-screen flex flex-col`}>
           <script src="/register-sw.js" async />
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+          </AuthProvider>
         </body>
     </html>
   );

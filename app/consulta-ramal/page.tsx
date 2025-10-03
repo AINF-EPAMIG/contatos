@@ -340,9 +340,10 @@ export default function ConsultaRamalPage() {
   });
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col">
       <HeaderConsultaRamal />
-      <div className="hero-section">
+      <div className="flex-1">
+        <div className="hero-section">
         <div className="hero-content-minimal">
           <div className="hero-text-minimal">
             <h1 className="hero-title-minimal">
@@ -535,6 +536,7 @@ export default function ConsultaRamalPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
       {/* Modal */}
       {isModalOpen && (
