@@ -9,7 +9,7 @@ export default function HeaderPainel() {
 
   return (
     <header
-      className="w-full fixed top-0 left-0 z-50 bg-white border-b border-gray-200 flex flex-col sm:flex-row items-center sm:justify-between px-2 sm:px-6 py-2 shadow-sm"
+      className="w-full z-50 bg-white border-b border-gray-200 flex flex-col sm:flex-row items-center sm:justify-between px-2 sm:px-6 py-2 shadow-sm"
       style={{ minHeight: 64 }}
     >
       {/* Logo EPAMIG */}
