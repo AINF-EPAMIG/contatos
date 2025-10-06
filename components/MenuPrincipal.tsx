@@ -2,16 +2,17 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HomeIcon, ChartBarIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, ClockIcon } from "@heroicons/react/24/outline";
 
-const menuComum = [
+type MenuItem = { label: string; icon: JSX.Element; href: string };
+
+const menuComum: MenuItem[] = [
   { label: 'Painel', icon: <HomeIcon className="w-5 h-5" />, href: '/painel' },
   { label: 'Meu histórico', icon: <ClockIcon className="w-5 h-5" />, href: '/historico' },
 ];
 
-const menuEspecial = [
-  { label: 'Início', icon: <HomeIcon className="w-5 h-5" />, href: '/' },
-  { label: 'Histórico', icon: <ChartBarIcon className="w-5 h-5" />, href: '/historico-geral' },
+const menuEspecial: MenuItem[] = [
+  // itens específicos foram removidos para simplificar o header (Início e Histórico)
 ];
 
 export default function MenuPrincipal() {
