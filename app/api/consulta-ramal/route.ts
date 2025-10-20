@@ -33,6 +33,7 @@ export async function GET() {
       LEFT JOIN diretoria dir ON c.diretoria_id = dir.id
       LEFT JOIN gabinete g ON c.gabinete_id = g.id
       WHERE c.status = 1 AND c.telefone IS NOT NULL AND TRIM(c.telefone) != ''
+      GROUP BY c.id
       ORDER BY c.nome ASC
     `);
     
