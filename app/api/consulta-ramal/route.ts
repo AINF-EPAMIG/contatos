@@ -17,6 +17,7 @@ export async function GET() {
         c.fazenda_id,
         c.diretoria_id,
         c.gabinete_id,
+        c.status,
         r.nome_regional       AS regional_nome,
         d.nome_departamento   AS departamento_nome,
         dv.nome_divisao       AS divisao_nome,
