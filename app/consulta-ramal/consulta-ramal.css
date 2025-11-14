@@ -43,7 +43,7 @@
 }
 .header-subtitle {
   font-size: 0.75rem;
-  color: black;
+  color: #000; /* garantir preto puro */
   margin: 0;
   line-height: 1.3;
   font-weight: 500;
