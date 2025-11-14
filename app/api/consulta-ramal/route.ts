@@ -32,7 +32,8 @@ export async function GET() {
       LEFT JOIN fazenda f ON c.fazenda_id = f.id
       LEFT JOIN diretoria dir ON c.diretoria_id = dir.id
       LEFT JOIN gabinete g ON c.gabinete_id = g.id
-      WHERE c.status = 1 AND c.telefone IS NOT NULL AND c.telefone != ''
+      WHERE c.status != 0
+      AND c.telefone != ''
       GROUP BY c.id
       ORDER BY c.nome ASC
     `);
