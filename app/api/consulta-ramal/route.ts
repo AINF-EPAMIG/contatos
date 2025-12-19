@@ -1,6 +1,23 @@
 import { NextResponse } from "next/server";
 import { funcionariosDB } from "@/lib/db";
 
+// Função para sanitizar telefone
+function sanitizarTelefone(telefone: unknown): string {
+  if (!telefone || typeof telefone !== 'string') return '';
+  
+  // Remove espaços, caracteres especiais e mantém apenas números
+  const telefoneLimpo = String(telefone)
+    .trim()
+    .replace(/[^\d().\s-]/g, '') // Remove caracteres inválidos
+    .replace(/\s+/g, ' ') // Normaliza espaços
+    .trim();
+  
+  // Se não tiver nenhum dígito, retorna vazio
+  if (!/\d/.test(telefoneLimpo)) return '';
+  
+  return telefoneLimpo;
+}
+
 export async function GET() {
   try {
     const [rows] = await funcionariosDB.query(`
@@ -38,8 +55,14 @@ export async function GET() {
       ORDER BY c.nome ASC
     `);
     
+    // Sanitizar telefones antes de retornar
+    const rowsSanitizados = (rows as Array<Record<string, unknown>>).map(row => ({
+      ...row,
+      telefone: sanitizarTelefone(row.telefone)
+    }));
+    
     // Retornar apenas o array de colaboradores
-    return NextResponse.json(rows);
+    return NextResponse.json(rowsSanitizados);
   } catch (error) {
     console.error("Erro ao consultar colaboradores:", error);
     return NextResponse.json({ success: false, message: "Erro ao consultar colaboradores" }, { status: 500 });

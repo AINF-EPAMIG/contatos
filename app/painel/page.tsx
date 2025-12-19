@@ -58,9 +58,22 @@ export default function PainelPage(){
   })();
 
   function maskTelefone(v:string){
-    v=v.replace(/\D/g,"");
-    if(v.length<=10){return v.replace(/(\d{2})(\d{4})(\d{0,4})/,(_,a,b,c)=>c?`(${a}) ${b}-${c}`: b?`(${a}) ${b}`: a?`(${a}`:"");}
-    return v.replace(/(\d{2})(\d{5})(\d{0,4})/,(_,a,b,c)=>c?`(${a}) ${b}-${c}`: b?`(${a}) ${b}`: a?`(${a}`:"");
+    if(!v || typeof v !== 'string') return '';
+    v = v.trim().replace(/\D/g,"");
+    
+    if(v.length === 0) return '';
+    
+    // Formato: (XX) XXXXX-XXXX para 11 dígitos, (XX) XXXX-XXXX para 10
+    if(v.length <= 10){
+      if(v.length >= 6) return `(${v.substring(0,2)}) ${v.substring(2,6)}-${v.substring(6)}`;
+      if(v.length >= 2) return `(${v.substring(0,2)}) ${v.substring(2)}`;
+      return v;
+    }
+    
+    // 11 dígitos
+    if(v.length >= 7) return `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+    if(v.length >= 2) return `(${v.substring(0,2)}) ${v.substring(2)}`;
+    return v;
   }
 
   async function handleSaveTelefone(e:React.FormEvent){

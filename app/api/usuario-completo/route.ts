@@ -32,6 +32,23 @@ interface EmailUser {
   email: string;
 }
 
+// Função para sanitizar telefone
+function sanitizarTelefone(telefone: unknown): string {
+  if (!telefone || typeof telefone !== 'string') return '';
+  
+  // Remove espaços, caracteres especiais e mantém apenas números
+  const telefoneLimpo = String(telefone)
+    .trim()
+    .replace(/[^\d().\s-]/g, '') // Remove caracteres inválidos
+    .replace(/\s+/g, ' ') // Normaliza espaços
+    .trim();
+  
+  // Se não tiver nenhum dígito, retorna vazio
+  if (!/\d/.test(telefoneLimpo)) return '';
+  
+  return telefoneLimpo;
+}
+
 // Usar a mesma conexão do NextAuth para consistência
 const db = mysql.createPool({
   host: process.env.DB_FUNC_HOST || process.env.DB_HOST || "localhost",
@@ -141,7 +158,7 @@ export async function GET(req: NextRequest) {
         nome: usuario.nome,
         email: usuario.email,
         cargo: usuario.cargo,
-        telefone: usuario.telefone,
+        telefone: sanitizarTelefone(usuario.telefone),
         regional: {
           id: usuario.regional_id,
           nome: usuario.regional_nome

@@ -19,6 +19,23 @@ interface ColaboradorDetalhes {
   gabinete_nome: string;
 }
 
+// Função para sanitizar telefone
+function sanitizarTelefone(telefone: unknown): string {
+  if (!telefone || typeof telefone !== 'string') return '';
+  
+  // Remove espaços, caracteres especiais e mantém apenas números
+  const telefoneLimpo = String(telefone)
+    .trim()
+    .replace(/[^\d().\s-]/g, '') // Remove caracteres inválidos
+    .replace(/\s+/g, ' ') // Normaliza espaços
+    .trim();
+  
+  // Se não tiver nenhum dígito, retorna vazio
+  if (!/\d/.test(telefoneLimpo)) return '';
+  
+  return telefoneLimpo;
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('=== Iniciando busca de detalhes do colaborador ===');
@@ -98,7 +115,7 @@ export async function POST(request: NextRequest) {
         id: colaborador.id,
         nome: colaborador.nome,
         email: colaborador.email,
-        telefone: colaborador.telefone,
+        telefone: sanitizarTelefone(colaborador.telefone),
         cargo: colaborador.cargo,
         regional: colaborador.regional_nome ? { nome: colaborador.regional_nome } : null,
         departamento: colaborador.departamento_nome ? { nome: colaborador.departamento_nome } : null,
